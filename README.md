@@ -10,10 +10,11 @@ see  https://github.com/simont77/fakegato-history for limitation and work exampl
 
 example:
 
->self.History = FakeGatoHistory('room', self)<br>
+>>self.History = FakeGatoHistory('room', self)
+
 
 @Accessory.run_at_interval(3000)<br>
     def run(self):<br>
     ....<br>
     self.History.addEntry({'time':round(time.time()),'temp': XXX,'humidity': XXX,'ppm':XXX)})
-<
+<<
