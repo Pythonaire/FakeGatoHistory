@@ -8,9 +8,11 @@ based on the fabulous work of https://github.com/simont77/fakegato-history.
 
 see  https://github.com/simont77/fakegato-history for limitation and examples.
 
-example:
+in your accessory class set:
 
 >self.History = FakeGatoHistory('room', self)
+
+update values like:
 
 >@Accessory.run_at_interval(3000)<br>
 >    def run(self):<br>
