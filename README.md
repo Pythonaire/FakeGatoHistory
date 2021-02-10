@@ -38,3 +38,5 @@ To bring up the Eve view, the soil values a recalculated to the range of an AirQ
 The functions translate_aq and translate_eveaq needed to translate the soil humidity values (percentage) into readable AirQuality data. Eve AirQuality and standard Homekit AirQuality have different ranges.
 
 This a working example. Have fun to test and make it better.
+
+![Image of hardware](Image.jpg)
