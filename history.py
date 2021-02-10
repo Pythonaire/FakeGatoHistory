@@ -76,8 +76,8 @@ TYPE_AQUA = 'aqua',
 TYPE_CUSTOM = 'custom'
 
 def precisionRound(num, prec):
-    factor = math.pow(10, int(prec))
-    return round(int(num) * factor) / factor
+    factor = math.pow(10, prec)
+    return round(num * factor) / factor
 
 def hexToBase64(x):
     string = re.sub(r"[^0-9A-F]", '', ('' + x), flags = re.I)
@@ -284,7 +284,7 @@ class FakeGatoHistory():
         if len(backLog) != 0:
             if immediate == None:
                 actualEntry['time'] = round(time.time())
-                actualEntry['status'] = backLog[0].status
+                actualEntry['status'] = backLog[0]['status']
             else:
                 actualEntry['time'] = backLog[0]['time']
                 actualEntry['status'] = backLog[0]['status']
