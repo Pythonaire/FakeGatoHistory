@@ -36,3 +36,5 @@ In this case, the "GardenValues" is a Eve Room accessory with:
 To bring up the Eve view, the soil values a recalculated to the range of an AirQuality Sensor. ("Excellent": 0-700, "Good": 700-1100, "Acceptable": 1100-1600, "Moderate": 1600-2000, "Bad": >2000)
 
 The functions translate_aq and translate_eveaq needed to translate the soil humidity values (percentage) into readable AirQuality data. Eve AirQuality and standard Homekit AirQuality have different ranges.
+
+This a working example. Have fun to test and make it better.
