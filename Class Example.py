@@ -1,35 +1,12 @@
 #!/usr/bin/env python3
 from pyhap.accessory import Accessory
 from pyhap.const import CATEGORY_SENSOR
-import logging, requests, json, socket, threading, time
+import logging, requests, json, socket, time
 from history import FakeGatoHistory
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
-
-file = open("config.json","r")
-Devices = json.load(file)
-file.close()
-#{"GardenValues": 10, "Irrigation": 11}
 NODE_CACHE = {}
-
-for x, y in Devices.items(): # create Cache: {'10': None, '11': None}
-    NODE_CACHE[str(y)] = None
-
-def controlrfm(url, node, cmd):
-    global NODE_CACHE
-    httpsend = {node: cmd}
-    NODE_CACHE[node] = "None" # set to None, wait for answer
-    ret = {}
-    try:
-        ret = requests.get(url, json=json.dumps(httpsend)).json()
-        #rfm return with {'node': "None"} if request failed
-        if ret[node] == "None":
-            ret[node] = 0 # set to 0
-        NODE_CACHE[node] = ret[node]
-        return ret
-    except Exception as e:
-        logging.info('**** request to  {0} timed out: {1}'.format(url, e))
 
 def getCache(url, node):
     requ = {node:"?"} # "?" useless, but needed for dict/json handling
@@ -49,7 +26,7 @@ def getCache(url, node):
     
 class GardenValues(Accessory):
     category = CATEGORY_SENSOR
-    def __init__(self, node, *args, **kwargs): # Garden sensor nodeNumber 10
+    def __init__(self, node, *args, **kwargs): 
         super().__init__(*args, **kwargs)
         self.name = args[1] # args[1] contained the Sensor Name given
         self.node = node # node number of the 433MHz sensor
@@ -75,7 +52,6 @@ class GardenValues(Accessory):
         Battery.configure_char('ChargingState', value = 2)
         Battery.configure_char('EveCustom')
 
-        #self.History = FakeGatoHistory('room', self,{'storage':'fs'})
         self.History = FakeGatoHistory('room', self)
         
     def translate_aq(self, data):
@@ -97,19 +73,14 @@ class GardenValues(Accessory):
     def run(self):
         recv = getCache(self.url_chached, str(self.node))
         logging.info('NodeData :{0}'.format(recv))
-        if recv[str(self.node)] == "None":
-            NodeData = {"Charge": 0, "Soil":0, "Hum": 0, "Temp": 0}
-        else:
-            NodeData = recv[str(self.node)]
-            if NodeData["Charge"] <= 0: #  notify StatusLowBattery
-                self.battstatus.set_value(1) # StatusLowBattery
-            else:
-                self.battstatus.set_value(0)
-            self.soilaq.set_value(self.translate_aq(NodeData["Soil"]))
-            self.soileve.set_value(self.translate_eveaq(NodeData["Soil"]))
-            self.hum.set_value(NodeData["Hum"]) # AM2302 accuracy ?
-            self.temp.set_value(NodeData["Temp"]) # AM2302 accuracy ?
-            self.battlevel.set_value(NodeData["Charge"])
+        NodeData = (lambda: {"Charge": 0, "Soil":0, "Hum": 0, "Temp": 0}, lambda: recv[str(self.node)])[recv[str(self.node)] != "None"]()
+        BattStatus = (lambda: 0, lambda: 1)[NodeData["Charge"]<=0]()
+        self.battstatus.set_value(BattStatus)
+        self.soilaq.set_value(self.translate_aq(NodeData["Soil"]))
+        self.soileve.set_value(self.translate_eveaq(NodeData["Soil"]))
+        self.hum.set_value(NodeData["Hum"]) 
+        self.temp.set_value(NodeData["Temp"]) 
+        self.battlevel.set_value(NodeData["Charge"])
         self.History.addEntry({'time':round(time.time()),'temp':NodeData["Temp"],'humidity': NodeData["Hum"],'ppm':self.translate_eveaq(NodeData["Soil"])})
 
         
