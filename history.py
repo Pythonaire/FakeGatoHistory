@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import logging, os, time, math, re, struct, json, codecs, base64, binascii
+import logging, os, time, math, re, json, base64
 from pyhap.accessory import Accessory
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
@@ -7,8 +7,6 @@ from storage import FakeGatoStorage
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
 ''' add additional service and characteristics to /usr/local/lib/python3.x/dist-packages/pyhap/ressources
-
-if needed, create own uuid via https://www.uuidgenerator.net
 
 services.json:
 
@@ -243,26 +241,24 @@ class FakeGatoHistory():
         self.S2W1.setter_callback = self.setCurrentS2W1
         self.S2W2.setter_callback = self.setCurrentS2W2
 
-
     def calculateAverage(self, params): # callback
         backLog = (lambda: [], lambda: params['backLog'])['backLog' in params]()
         previousAvrg = (lambda: {}, lambda: params['previousAvrg'])['previousAvrg' in params]()
         timer = params['timer']
-        fakegato = self
         calc = {
 		    	'sum': {},
 			    'num': {},
 			    'avrg': {}
 		        }
-        for h in range(len(backLog)):
-            if len(backLog) != 0:
-                for key in backLog[h]:
-                    if key in backLog[h] and key != 'time':
+        if len(backLog) != 0:
+            for h in backLog: #list
+                for key in h: #dict
+                    if key != 'time':
                         if not key in calc['sum']:
                             calc['sum'][key] = 0
                         if not key in calc['num']:
                             calc['num'][key] = 0
-                        calc['sum'][key] += backLog[h][key]
+                        calc['sum'][key] += h[key]
                         calc['num'][key] += 1
                         calc['avrg'][key] = precisionRound(calc['sum'][key] / calc['num'][key], 2)
         calc['avrg']['time'] = round(time.time())
