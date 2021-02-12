@@ -26,7 +26,9 @@ self.History.addEntry({'time':round(time.time()),'temp': XXX,'humidity': XXX, 'p
 
 To understand the example:
 
-In this example, a sensor unit (eg. PlantSensor 433 MHz) send fresh data each 30 minutes to a 433 Mhz bridge unit. The bridge store these data in a dictionary. The "GardenValue" class call each 5 minutes for fresh data via getCache() the result is {"Charge": XX, "Soil"XX, "Hum": XX, "Temp": XX}.
+In this example, a sensor unit (eg. PlantSensor 433 MHz) send fresh data each 30 minutes to a raspberry bridge. (see also <https://github.com/Pythonaire/HAP-Python-Packet-Bridge>) 
+
+The bridge store these data in a dictionary. The "GardenValue" class call each 5 minutes for fresh data via getCache() the result is {"Charge": XX, "Soil"XX, "Hum": XX, "Temp": XX}.
 This dictionary will be maped to the homekit.
 
 
