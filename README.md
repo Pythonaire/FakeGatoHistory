@@ -9,7 +9,7 @@ based on the fabulous work of <https://github.com/simont77/fakegato-history>.
 
 see  <https://github.com/simont77/fakegato-history> for limitation and examples.
 
-in your accessory class add:
+for a quick test, in your accessory class, add:
 
 ```#!/usr/bin/env python3
 self.History = FakeGatoHistory('room', self)
