@@ -21,7 +21,7 @@ update values like:
 @Accessory.run_at_interval(3000)
     def run(self):
     ....
-self.History.addEntry({'time':round(time.time()),'temp': XXX,'humidity': XXX)})
+self.History.addEntry({'time':round(time.time()),'temp': XXX,'humidity': XXX, 'ppm': XXX)})
 ```
 
 To understand the example:
