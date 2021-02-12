@@ -26,48 +26,25 @@ def getCache(url, node):
     
 class GardenValues(Accessory):
     category = CATEGORY_SENSOR
-    def __init__(self, node, *args, **kwargs): 
+    def __init__(self, node, *args, **kwargs): # Garden sensor nodeNumber 10
         super().__init__(*args, **kwargs)
         self.name = args[1] # args[1] contained the Sensor Name given
         self.node = node # node number of the 433MHz sensor
         self.set_info_service(firmware_revision='0.0.1', model='Gardener01', manufacturer= 'Peter Wiechmann', serial_number="Soil-001")
-        AirQualitySensor = self.add_preload_service("AirQualitySensor", chars=['AirQuality', 'EveAirQuality', 'EveCustom', 'Name'])
-        TempSensor = self.add_preload_service("TemperatureSensor", chars=['CurrentTemperature', 'EveCustom'])
-        HumSensor = self.add_preload_service("HumiditySensor", chars=['CurrentRelativeHumidity','EveCustom'])
-        Battery = self.add_preload_service("BatteryService", chars=['ChargingState','StatusLowBattery', 'BatteryLevel', 'EveCustom'])
-
-        self.soilaq =AirQualitySensor.configure_char('AirQuality', value= 0) # fake AirQuality, inital value
-        self.soileve = AirQualitySensor.configure_char('EveAirQuality', value = 0) # fake EveAirQuality inital value
-        AirQualitySensor.configure_char('EveCustom')
-        AirQualitySensor.configure_char('Name', value="Bodenfeuchtigkeit")
-    
-        self.temp = TempSensor.configure_char('CurrentTemperature', value= 0) # initial value
-        TempSensor.configure_char('EveCustom')
-        self.hum = HumSensor.configure_char('CurrentRelativeHumidity', value =0) # inital value
-        HumSensor.configure_char('EveCustom')
-
-
-        self.battlevel = Battery.configure_char('BatteryLevel', value = 0)
-        self.battstatus = Battery.configure_char('StatusLowBattery', value = 1)
+        PlantSensor = self.add_preload_service('PlantSensor', chars=['Name', 'SoilMoisture', 'CurrentTemperature', 'CurrentRelativeHumidity'])
+        Battery = self.add_preload_service("BatteryService", chars=['ChargingState','StatusLowBattery', 'BatteryLevel'])
+        PlantSensor.configure_char('Name', value= 'SoilMoisture')
+        self.SoilMoisture = PlantSensor.configure_char('SoilMoisture', value= 0) #initial
+        self.AirTemperature = PlantSensor.configure_char('CurrentTemperature', value= 0) #initial
+        self.AirHumidity = PlantSensor.configure_char('CurrentRelativeHumidity', value = 0) # initial
+        self.BattLevel = Battery.configure_char('BatteryLevel', value = 0)
+        self.BattStatus = Battery.configure_char('StatusLowBattery', value = 1)
         Battery.configure_char('ChargingState', value = 2)
-        Battery.configure_char('EveCustom')
 
+        self.url_chached = 'http://rfmgate.home:8001/cached'
+        self.url_forward = 'http://PiRadio.home:8001/postjson'
         self.History = FakeGatoHistory('room', self)
         
-    def translate_aq(self, data):
-        #"Excellent": 1, "Good": 2, "Fair": 3, "Inferior": 4, "Poor": 5, "Unknown": 0
-        if data<=10 and data != 0: ret = 5
-        elif data<=20 and data>=10: ret = 4
-        elif data<=40 and data>=20: ret = 3
-        elif data<=60 and data>= 40: ret = 2
-        elif data>=60: ret = 1
-        else: ret = 0
-        return ret
-    
-    def translate_eveaq(self, data):
-        #"Excellent": 0-700, "Good": 700-1100, "Acceptable": 1100-1600, "Moderate": 1600-2000, "Bad": >2000
-        eve_data = (-data*20)+2000
-        return eve_data
 
     @Accessory.run_at_interval(3000)
     def run(self):
@@ -75,14 +52,12 @@ class GardenValues(Accessory):
         logging.info('NodeData :{0}'.format(recv))
         NodeData = (lambda: {"Charge": 0, "Soil":0, "Hum": 0, "Temp": 0}, lambda: recv[str(self.node)])[recv[str(self.node)] != "None"]()
         BattStatus = (lambda: 0, lambda: 1)[NodeData["Charge"]<=0]()
-        self.battstatus.set_value(BattStatus)
-        self.soilaq.set_value(self.translate_aq(NodeData["Soil"]))
-        self.soileve.set_value(self.translate_eveaq(NodeData["Soil"]))
-        self.hum.set_value(NodeData["Hum"]) 
-        self.temp.set_value(NodeData["Temp"]) 
-        self.battlevel.set_value(NodeData["Charge"])
-        self.History.addEntry({'time':round(time.time()),'temp':NodeData["Temp"],'humidity': NodeData["Hum"],'ppm':self.translate_eveaq(NodeData["Soil"])})
-
+        self.BattStatus.set_value(BattStatus)
+        self.SoilMoisture.set_value(NodeData["Soil"])
+        self.AirHumidity.set_value(NodeData["Hum"])
+        self.AirTemperature.set_value(NodeData["Temp"])
+        self.BattLevel.set_value(NodeData["Charge"])
+        self.History.addEntry({'time':round(time.time()),'temp':NodeData["Temp"],'humidity': NodeData["Hum"]})
         
     def stop(self):
         logging.info('Stopping accessory.')
