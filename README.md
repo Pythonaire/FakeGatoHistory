@@ -9,6 +9,8 @@ based on the fabulous work of <https://github.com/simont77/fakegato-history>.
 
 see  <https://github.com/simont77/fakegato-history> for limitation and examples.
 
+You need to add service and characteristics into pyhap/ressources. (see history.py)
+
 for a quick test, in your accessory class, add:
 
 ```#!/usr/bin/env python3
