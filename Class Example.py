@@ -30,7 +30,7 @@ class GardenValues(Accessory):
         super().__init__(*args, **kwargs)
         self.name = args[1] # args[1] contained the Sensor Name given
         self.node = node # node number of the 433MHz sensor
-        self.set_info_service(firmware_revision='0.0.1', model='Gardener01', manufacturer= 'Peter Wiechmann', serial_number="Soil-001")
+        self.set_info_service(firmware_revision='0.0.1', model='Gardener01', manufacturer= 'Pythonaire', serial_number="Soil-001")
         PlantSensor = self.add_preload_service('PlantSensor', chars=['Name', 'SoilMoisture', 'CurrentTemperature', 'CurrentRelativeHumidity'])
         Battery = self.add_preload_service("BatteryService", chars=['ChargingState','StatusLowBattery', 'BatteryLevel'])
         PlantSensor.configure_char('Name', value= 'SoilMoisture')
@@ -42,7 +42,6 @@ class GardenValues(Accessory):
         Battery.configure_char('ChargingState', value = 2)
 
         self.url_chached = 'http://rfmgate.home:8001/cached'
-        self.url_forward = 'http://PiRadio.home:8001/postjson'
         self.History = FakeGatoHistory('room', self)
         
 
