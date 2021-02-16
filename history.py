@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import logging, os, time, math, re, json, base64
+import logging, os, time, math, re, json, base64, threading
 from pyhap.accessory import Accessory
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
@@ -94,6 +94,20 @@ def swap16(i):
 
 def swap32(i):
     return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF)
+
+def setInterval(interval):
+        def decorator(function):
+            def wrapper(*args, **kwargs):
+                stopped = threading.Event()
+                def loop(): # executed in another thread
+                    while not stopped.wait(interval): # until stopped
+                        function(*args, **kwargs)
+                t = threading.Thread(target=loop)
+                t.daemon = True # stop if the program exits
+                t.start()
+                return stopped
+            return wrapper
+        return decorator
 
 
 class FakeGatoHistory():
@@ -410,6 +424,7 @@ class FakeGatoHistory():
                 'data': (lambda: data, lambda: json.dumps(data))[isinstance(data, dict)]()
                 })
 
+    @setInterval(86400) # clean the storage file each day
     def cleanPersist(self):
         logging.info("Cleaning...")
         self.globalFakeGatoStorage.remove({'service': self})

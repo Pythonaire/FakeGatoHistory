@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import logging, time, socket, os, asyncio, json
+import logging, time, socket, os, json
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
@@ -111,5 +111,7 @@ class FakeGatoStorage():
     def remove(self,params):
         writer = params['service']
         if writer.storage == 'fs':
-            logging.info("** Fakegato-storage delete FS file: {0}".format(os.path.join(writer.path, writer.fileName)))
-            os.remove(os.path.join(writer.path, writer.fileName))
+            logging.info("** Fakegato-storage clean persist file: {0}".format(os.path.join(writer.path, writer.fileName)))
+            with open(os.path.join(writer.path, writer.fileName), 'rw+') as fs:
+                fs.truncate(0) # resize to 0
+            fs.close()
