@@ -5,7 +5,7 @@ Python transcoded, to work with HAP-Python accessory classes.
 based on the fabulous work of <https://github.com/simont77/fakegato-history>.
 
 - without external persistance data (like google drive etc.), just local storage({'storage':'fs'} - your local file)
-- the persistance data will be cleared each day
+- the persistance data feature is "under construction" - functions working, but strange behaviour on multiple clients
 - tested with 'room', 'power' and 'weather' binded to a HAP-Python bridge
 
 see  <https://github.com/simont77/fakegato-history> for limitation and examples.
