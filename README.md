@@ -1,6 +1,6 @@
 # FakeGatoHistory
 
-Python transcoded, to work with HAP-Python accessory classes.
+Python transcoded, to work with HAP-Python accessory classes. I use that with my 433MHz sensor devices <https://github.com/Pythonaire/HAP-Python-Packet-Bridge>.
 
 based on the fabulous work of <https://github.com/simont77/fakegato-history>.
 
@@ -10,7 +10,7 @@ based on the fabulous work of <https://github.com/simont77/fakegato-history>.
 
 see  <https://github.com/simont77/fakegato-history> for limitation and examples.
 
-You need to add service and characteristics into pyhap/ressources. (see history.py)
+You need to add service and characteristics into pyhap/ressources. (see history.py). Same, if you plan to use self designed sensor/actor units.
 
 for a quick test, in your accessory class, add:
 
