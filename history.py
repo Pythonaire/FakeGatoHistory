@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import logging, os, time, math, re, json, base64, threading
+import logging, os, time, math, re, base64
 from pyhap.accessory import Accessory
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
@@ -95,20 +95,6 @@ def swap16(i):
 def swap32(i):
     return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF)
 
-def setInterval(interval):
-        def decorator(function):
-            def wrapper(*args, **kwargs):
-                stopped = threading.Event()
-                def loop(): # executed in another thread
-                    while not stopped.wait(interval): # until stopped
-                        function(*args, **kwargs)
-                t = threading.Thread(target=loop)
-                t.daemon = True # stop if the program exits
-                t.start()
-                return stopped
-            return wrapper
-        return decorator
-
 
 class FakeGatoHistory():
     def __init__(self,accessoryType, accessory, optionalParams=None, *args, **kwargs):
@@ -121,19 +107,17 @@ class FakeGatoHistory():
         self.entry2address = lambda e: e % self.memorySize
         
         if isinstance(optionalParams, dict):
-            fileSuffix = '_persist.json'
             # javascript ternary equivalent with Lambda
             #  condition ? true : false
             # (lambda: False, lambda: true)[condition]()
+            currpath = os.getcwd()
+            autoFileDescriptor = currpath + '/' + self.accessoryName +'_History' + '_persist.json'
             self.size = (lambda: 4032, lambda: optionalParams['size'])['size' in optionalParams]()
             self.minutes = (lambda: 10, lambda: optionalParams['minutes'])['minutes' in optionalParams]()
             self.disableTimer = (lambda: False, lambda: optionalParams['disableTimer'])['disableTimer' in optionalParams]()
             self.disableRepeatLastData = (lambda: False, lambda: optionalParams['disableRepeatLastData'])['disableRepeatLastData' in optionalParams]()
             self.storage = (lambda : None, lambda: 'fs')['storage' in optionalParams]()
-            self.path = (lambda: os.getcwd(), lambda: optionalParams['path'])['path' in optionalParams]()
-            self.fileName = (lambda: self.accessoryName + '_History' + fileSuffix, lambda: optionalParams['fileName'])['fileName' in optionalParams]()
-            self.keyPath = (lambda: os.path.abspath(self.fileName), lambda: optionalParams['keyPath'])['keyPath' in optionalParams]()
-            self.chars = (lambda: [], lambda: optionalParams['chars'])['chars' in optionalParams]()
+            self.fileName = (lambda: autoFileDescriptor, lambda: currpath + optionalParams['fileName'])['fileName' in optionalParams]()
         else:
             self.size = 4032
             self.minutes = 10
@@ -149,12 +133,12 @@ class FakeGatoHistory():
 
         if self.storage != None:
             self.globalFakeGatoStorage = FakeGatoStorage(params=None)
-            self.loaded = self.globalFakeGatoStorage.addWriter(self, { # return with true, if file exists or generated 
+            ready = self.globalFakeGatoStorage.addWriter(self, { # return with true, if file exists or generated 
                 'storage': self.storage,
-                'path': self.path,
-                'fileName': self.fileName,
-                'keyPath': (lambda: None, lambda: self.keyPath)['self.keyPath' in locals()]()
-            })
+                'fileName': self.fileName})
+            if ready == True:
+                self.loaded = self.load()
+
 
         if self.accessoryType == TYPE_WEATHER:
             self.accessoryType116 = "03 0102 0202 0302"
@@ -421,13 +405,31 @@ class FakeGatoHistory():
 		}
         self.globalFakeGatoStorage.write({
                 'service': self,
-                'data': (lambda: data, lambda: json.dumps(data))[isinstance(data, dict)]()
+                'data': data
                 })
 
-    @setInterval(86400) # clean the storage file each day
-    def cleanPersist(self):
-        logging.info("Cleaning...")
-        self.globalFakeGatoStorage.remove({'service': self})
+    def load(self):
+        logging.info("Loading....")
+        data = self.globalFakeGatoStorage.read({'service': self})
+        logging.info("read data {0} :".format(data))
+        if len(data) != 0:
+            for i in data:
+                try:
+                    params = {
+                    'firstEntry': data['firstEntry'],
+                    'lastEntry' : data['lastEntry'],
+                    'usedMemory' : data['usedMemory'],
+                    'refTime' : data['refTime'],
+                    'initialTime' : data['initialTime'],
+                    'history' : data['history'],
+                    'extra' : data['extra']
+                    }
+                    self.calculateAverage(params)
+                except Exception as e:
+                    logging.info("**ERROR fetching persisting data  - invalid JSON ** {0}".format(e))
+            self.globalFakeGatoStorage.remove({'service': self})
+        return True # set self.loaded to True
+
 
     def getCurrentS2R2(self):
         self.entry2address = lambda val: val % self.memorySize

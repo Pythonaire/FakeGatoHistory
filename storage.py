@@ -4,14 +4,13 @@ from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 hostname = socket.gethostname().split('.')[0]
-selfStorage = None
+
 
 class FakeGatoStorage():
     def __init__(self, params, *args, **kwargs):
         if params is None:
             params = {}
         self.writers = []
-        self.selfStorage = selfStorage
         self.addingWriter = False
         
     def addWriter(self, service, params):
@@ -22,33 +21,31 @@ class FakeGatoStorage():
             newWriter = {
 				'service': service,
 				'storage': (lambda: 'fs', lambda: params['storage'])['storage' in params](),
-                'fileName': params['fileName'],
-                'path':params['path']
+                'fileName': params['fileName']
 				#Unique filename per homebridge server.  Allows test environments on other servers not to break prod.
 			}
             if newWriter['storage'] == 'fs':
-                newWriter['storageHandler'] = 'fs'
-                newWriter['path'] = (lambda: str(Path.home()), lambda: params['path'])['path' in params]()
                 self.writers.append(newWriter)
                 try:
-                    fs = open(os.path.join(newWriter['path'], newWriter['fileName']), 'r')
-                    if os.path.getsize(fs) != 0:
-                        logging.info("History Loaded from Persistant Storage")
-                        self.load(service)
-                    fs.close()
-                except Exception:
-                    fs = open(os.path.join(newWriter['path'], newWriter['fileName']), 'a')
-                    logging.info("Create a empty File : {0}".format(os.path.join(newWriter['path'], newWriter['fileName'])))
+                    with open(newWriter['fileName'], 'r') as fs:
+                        if os.path.getsize(newWriter['fileName']) != 0:
+                            logging.info("History Loaded from Persistant Storage")
+                            fs.close()
+                            #self.load(newWriter['service'])
+                except IOError as e:
+                    fs = open(newWriter['fileName'], 'w')
+                    logging.info("Create a empty File : {0}".format(newWriter['fileName']))
                     fs.close()
                 self.addingWriter = True
         self.addingWriter = False
         return True # set history self.loaded
 
     def getWriter(self, service):
-        for value in self.writers:
-            if value == service:
-                return value
+        for i in self.writers:
+            if i['service'] == service:
+                return i
             break
+
     def _getWriterIndex(self, service):
         return self.writers.index(service)
 
@@ -61,13 +58,14 @@ class FakeGatoStorage():
 
     def write(self, params):
         self.writing = True
-        writer = params['service'] 
-        #logging.info("data:{0}".format(params['data']))
+        writer = self.getWriter(params['service'])
         while self.writing == True:
             try:
-                logging.info('** Fakegato-storage write FS file: {0}'.format(os.path.join(writer.path, writer.fileName)))
-                with open(os.path.join(writer.path, writer.fileName), 'a') as fs:
-                    json.dump(params['data'], fs)
+                logging.info('** Fakegato-storage write FS file: {0}'.format(writer['fileName']))
+                with open(writer['fileName'], 'a') as fs:
+                    data = json.dumps(params['data'])
+                    fs.writelines([data])
+                    #json.dump(params['data'], fs)
                 self.writing = False
                 fs.close()
             except Exception as e:
@@ -75,43 +73,26 @@ class FakeGatoStorage():
                 self.writing = False
                 time.sleep(0.1)
             
-    def load(self, service):
-        logging.info("Loading....")
-        data = self.read({'service': service})
-        if data !='':
-            try:
-                #logging.info("read data from {0} : {1}".format(service.accessoryName, data))
-                jsonFile = json.loads(data)
-                service.firstEntry = jsonFile['firstEntry']
-                service.lastEntry = jsonFile['lastEntry']
-                service.usedMemory = jsonFile['usedMemory']
-                service.refTime = jsonFile['refTime']
-                service.initialTime = jsonFile['initialTime']
-                service.history = jsonFile['history']
-                service.extra = jsonFile['extra']
-            except Exception as e:
-                logging.info("**ERROR fetching persisting data  - invalid JSON ** {0}".format(e))
-        else:
-            logging.info("** Start from the scratch ** ")
-
-    
     def read(self,params):
-        writer = params['service']
-        data = None
-        if writer.storage == 'fs':
-            logging.info("** Fakegato-storage read FS file: {0}".format(os.path.join(writer.path, writer.fileName)))
+        writer = self.getWriter(params['service'])
+        if writer['storage'] == 'fs':
+            logging.info("** Fakegato-storage read FS file: {0}".format(writer['fileName']))
+            data = []
             try:
-                with open(os.path.join(writer.path, writer.fileName), 'r') as fs:
-                    data = json.load(fs)
+                with open(writer['fileName'], 'r') as fs:
+                    list = fs.readlines()
+                    for i in list:
+                        data.append(json.loads(i.rstrip('\n')))
                 fs.close()
-            except Exception as err:
+            except ValueError as err:
                 logging.info("** Fakegato-storage file could not be readed: {0}".format(err))
         return data
 
     def remove(self,params):
-        writer = params['service']
-        if writer.storage == 'fs':
-            logging.info("** Fakegato-storage clean persist file: {0}".format(os.path.join(writer.path, writer.fileName)))
-            with open(os.path.join(writer.path, writer.fileName), 'rw+') as fs:
+        writer = self.getWriter(params['service'])
+        if writer['storage'] == 'fs':
+            logging.info("** Fakegato-storage clean persist file: {0}".format(writer['fileName']))
+            open('file.txt', 'w').close()
+            with open(writer['fileName'], 'rw+') as fs:
                 fs.truncate(0) # resize to 0
             fs.close()
