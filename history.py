@@ -411,20 +411,18 @@ class FakeGatoHistory():
     def load(self):
         logging.info("Loading....")
         data = self.globalFakeGatoStorage.read({'service': self})
-        logging.info("read data {0} :".format(data))
+        #logging.info("read data {0} :".format(data))
         if len(data) != 0:
             for i in data:
                 try:
-                    params = {
-                    'firstEntry': data['firstEntry'],
-                    'lastEntry' : data['lastEntry'],
-                    'usedMemory' : data['usedMemory'],
-                    'refTime' : data['refTime'],
-                    'initialTime' : data['initialTime'],
-                    'history' : data['history'],
-                    'extra' : data['extra']
-                    }
-                    self.calculateAverage(params)
+                    self.firstEntry = data['firstEntry']
+                    self.lastEntry = data['lastEntry']
+                    self.usedMemory = data['usedMemory']
+                    self.refTime = data['refTime']
+                    self.initialTime = data['initialTime']
+                    self.history = data['history']
+                    self.extra = data['extra']
+                    self.calculateAverage(self.history)
                 except Exception as e:
                     logging.info("**ERROR fetching persisting data  - invalid JSON ** {0}".format(e))
             self.globalFakeGatoStorage.remove({'service': self})

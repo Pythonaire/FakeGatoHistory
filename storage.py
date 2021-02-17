@@ -64,7 +64,7 @@ class FakeGatoStorage():
                 logging.info('** Fakegato-storage write FS file: {0}'.format(writer['fileName']))
                 with open(writer['fileName'], 'a') as fs:
                     data = json.dumps(params['data'])
-                    fs.writelines([data])
+                    fs.writelines(data)
                     #json.dump(params['data'], fs)
                 self.writing = False
                 fs.close()
