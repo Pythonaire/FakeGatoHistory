@@ -2,7 +2,6 @@
 import logging, os, time, math, re, base64
 from pyhap.accessory import Accessory
 from timer import FakeGatoTimer
-from storage import FakeGatoStorage
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
@@ -100,7 +99,6 @@ class FakeGatoHistory():
     def __init__(self,accessoryType, accessory, optionalParams=None, *args, **kwargs):
         super().__init__(*args, **kwargs) 
         self.signatures = []
-        self.extra= None
         self.accessory = accessory
         self.accessoryName = self.accessory.display_name
         self.accessoryType = accessoryType
@@ -116,21 +114,24 @@ class FakeGatoHistory():
             self.minutes = (lambda: 10, lambda: optionalParams['minutes'])['minutes' in optionalParams]()
             self.disableTimer = (lambda: False, lambda: optionalParams['disableTimer'])['disableTimer' in optionalParams]()
             self.disableRepeatLastData = (lambda: False, lambda: optionalParams['disableRepeatLastData'])['disableRepeatLastData' in optionalParams]()
+<<<<<<< HEAD
+=======
             self.storage = (lambda : None, lambda: 'fs')['storage' in optionalParams]()
             self.fileName = (lambda: autoFileDescriptor, lambda: currpath + optionalParams['fileName'])['fileName' in optionalParams]()
+>>>>>>> 88055cb2e08c294d44e50b5a972e0e879f82cf57
         else:
             self.size = 4032
             self.minutes = 10
             self.disableTimer = False
-            self.storage = None
             self.chars = None
             self.disableRepeatLastData = False
             # use logging.info instead of optionalParams.log || self.Accessory.log || {};
 
-
         if self.disableTimer == False:
             self.globalFakeGatoTimer = FakeGatoTimer({'minutes':self.minutes})
 
+<<<<<<< HEAD
+=======
         if self.storage != None:
             self.globalFakeGatoStorage = FakeGatoStorage(params=None)
             ready = self.globalFakeGatoStorage.addWriter(self, { # return with true, if file exists or generated 
@@ -140,6 +141,7 @@ class FakeGatoHistory():
                 self.loaded = self.load()
 
 
+>>>>>>> 88055cb2e08c294d44e50b5a972e0e879f82cf57
         if self.accessoryType == TYPE_WEATHER:
             self.accessoryType116 = "03 0102 0202 0302"
             self.accessoryType117 = "07"
@@ -225,10 +227,8 @@ class FakeGatoHistory():
         self.refTime = 0
         self.memoryAddress = 0 
         self.dataStream = ''
-        self.saving = False
         self.registerEvents()
-        if self.storage == None:
-            self.loaded = True
+
         
     def registerEvents(self):
         logging.info('Registring Events {0}'.format(self.accessoryName))
@@ -328,62 +328,59 @@ class FakeGatoHistory():
             self._addEntry(self.entry)
 
     def _addEntry(self, entry):
-        if self.loaded == True:
-            self.entry2address = lambda e: e % self.memorySize
-            if self.usedMemory < self.memorySize:
-                self.usedMemory += 1
-                self.firstEntry = 0
-                self.lastEntry = self.usedMemory
-                self.history.append(self.lastEntry)
-            else:
+        self.entry2address = lambda e: e % self.memorySize
+        if self.usedMemory < self.memorySize:
+            self.usedMemory += 1
+            self.firstEntry = 0
+            self.lastEntry = self.usedMemory
+            self.history.append(self.lastEntry)
+        else:
+            self.firstEntry += 1
+            self.lastEntry = self.firstEntry + self.usedMemory
+            self.history.append(self.lastEntry)
+            if self.restarted == True:
+                self.history[self.entry2address(self.lastEntry)] = {'time': entry['time'],'setRefTime': 1}
                 self.firstEntry += 1
                 self.lastEntry = self.firstEntry + self.usedMemory
-                self.history.append(self.lastEntry)
-                if self.restarted == True:
-                    self.history[self.entry2address(self.lastEntry)] = {'time': entry['time'],'setRefTime': 1}
-                    self.firstEntry += 1
-                    self.lastEntry = self.firstEntry + self.usedMemory
-                    self.restarted = False
-            if self.refTime == 0:
-                self.refTime = entry['time'] - EPOCH_OFFSET
-                self.history[self.lastEntry] = {'time': entry['time'],'setRefTime': 1}
-                self.initialTime = entry['time']
-                self.lastEntry += 1
-                self.usedMemory += 1
-                self.history.append(self.lastEntry)
-            self.history[self.entry2address(self.lastEntry)] = entry
-            if self.usedMemory < self.memorySize:
-                val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
-                format(swap32(int(entry['time'] - self.refTime - EPOCH_OFFSET)),'08X'),
-                format(swap32(int(self.refTime)),'08X'),
-                self.accessoryType116,
-                format(swap16(int(self.usedMemory + 1)),'04X'),
-                format(swap16(int(self.memorySize)),'04X'),
-                format(swap32(int(self.firstEntry)),'08X')
-                ))
-            else:
-                val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
-                format(swap32(int(entry['time'] - self.refTime - EPOCH_OFFSET)),'08X'),
-                format(swap32(int(self.refTime)),'08X'),
-                self.accessoryType116,
-                format(swap16(int(self.usedMemory)),'04X'),
-                format(swap16(int(self.memorySize)),'04X'),
-                format(swap32(int(self.firstEntry+1)),'08X')
-                ))
-            self.service.configure_char("S2R1", value = hexToBase64(val))
-            logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
-            logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
-            logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
-            logging.info("116 {0}: {1}".format(self.accessoryName, val))
-            if self.storage != None:
-                self.save()
+                self.restarted = False
+        if self.refTime == 0:
+            self.refTime = entry['time'] - EPOCH_OFFSET
+            self.history[self.lastEntry] = {'time': entry['time'],'setRefTime': 1}
+            self.initialTime = entry['time']
+            self.lastEntry += 1
+            self.usedMemory += 1
+            self.history.append(self.lastEntry)
+        self.history[self.entry2address(self.lastEntry)] = entry
+        if self.usedMemory < self.memorySize:
+            val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
+            format(swap32(int(entry['time'] - self.refTime - EPOCH_OFFSET)),'08X'),
+            format(swap32(int(self.refTime)),'08X'),
+            self.accessoryType116,
+            format(swap16(int(self.usedMemory + 1)),'04X'),
+            format(swap16(int(self.memorySize)),'04X'),
+            format(swap32(int(self.firstEntry)),'08X')
+            ))
         else:
-            time.sleep(0.1)
-            self._addEntry(entry)
+            val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
+            format(swap32(int(entry['time'] - self.refTime - EPOCH_OFFSET)),'08X'),
+            format(swap32(int(self.refTime)),'08X'),
+            self.accessoryType116,
+            format(swap16(int(self.usedMemory)),'04X'),
+            format(swap16(int(self.memorySize)),'04X'),
+            format(swap32(int(self.firstEntry+1)),'08X')
+            ))
+        self.service.configure_char("S2R1", value = hexToBase64(val))
+        logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
+        logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
+        logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
+        logging.info("116 {0}: {1}".format(self.accessoryName, val))
+    
 
     def getInitialTime(self):
         return self.initialTime
 
+<<<<<<< HEAD
+=======
     def setExtraPersistedData(self, extra):
         self.extra = extra
 
@@ -429,6 +426,7 @@ class FakeGatoHistory():
         return True # set self.loaded to True
 
 
+>>>>>>> 88055cb2e08c294d44e50b5a972e0e879f82cf57
     def getCurrentS2R2(self):
         self.entry2address = lambda val: val % self.memorySize
         if (self.currentEntry <= self.lastEntry) and (self.transfer == True):
