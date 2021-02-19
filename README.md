@@ -2,14 +2,12 @@
 
 Python transcoded, to work with HAP-Python accessory classes.
 
-based on the fabulous work of <https://github.com/simont77/fakegato-history>.
+Based on the fabulous work of <https://github.com/simont77/fakegato-history>. In contrast to the original javascript, this translated version does not use persistance storage of long history data. See  <https://github.com/simont77/fakegato-history> for limitation and examples.
+It is tested so fare with 'room', 'weather' and 'energy'.
 
-- without external persistance data (like google drive etc.), just local storage.
-- tested with 'room' an 'power' binded to a HAP-Python bridge
+I use this in combination HAP-Python <https://github.com/ikalchev/HAP-python>, a Python-based bridge. If you are using special, none HAP-default services and characteristics you need to define these under "/usr/local/lib/python3.x/dist-packages/pyhap/ressources". Additional, in these files you have to declare the history service and characteristics (see history.py) to work with.
 
-see  <https://github.com/simont77/fakegato-history> for limitation and examples.
-
-in your accessory class add:
+Then, you can add:
 
 ```#!/usr/bin/env python3
 self.History = FakeGatoHistory('room', self)
