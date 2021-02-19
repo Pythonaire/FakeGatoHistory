@@ -56,7 +56,7 @@ class GardenValues(Accessory):
         self.AirHumidity.set_value(NodeData["Hum"])
         self.AirTemperature.set_value(NodeData["Temp"])
         self.BattLevel.set_value(NodeData["Charge"])
-        self.History.addEntry({'time':round(time.time()),'temp':NodeData["Temp"],'humidity': NodeData["Hum"]})
+        self.History.addEntry({'time':round(time.time()),'temp':NodeData["Temp"],'humidity': NodeData["Hum"], 'ppm': 0})
         
     def stop(self):
         logging.info('Stopping accessory.')
