@@ -94,7 +94,6 @@ class FakeGatoTimer():
         data = params['entry']
         service = params['service']
         immediateCallback = (lambda: False, lambda: params['immediateCallback'])['immediateCallback' in params]()
-        logging.info("**Fakegato-timer: addData {0} {1} immediate: {2}".format(service.accessoryName, data, immediateCallback))
         if immediateCallback == True: # door or motion -> replace
             if len(self.getSubscriber(service)['backLog']) == 0:
                 self.getSubscriber(service)['backLog'].append(data)

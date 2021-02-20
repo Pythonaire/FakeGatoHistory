@@ -104,6 +104,7 @@ class FakeGatoHistory():
         self.accessoryType = accessoryType
         self.entry2address = lambda e: e % self.memorySize
         
+        
         if isinstance(optionalParams, dict):
             # javascript ternary equivalent with Lambda
             #  condition ? true : false
@@ -224,6 +225,7 @@ class FakeGatoHistory():
         backLog = (lambda: [], lambda: params['backLog'])['backLog' in params]()
         previousAvrg = (lambda: {}, lambda: params['previousAvrg'])['previousAvrg' in params]()
         timer = params['timer']
+        fakegato = self.service
         calc = {
 		    	'sum': {},
 			    'num': {},
@@ -247,14 +249,14 @@ class FakeGatoHistory():
                     if len(backLog) == 0 or (key not in calc['avrg']):
                         calc['avrg'][key] = previousAvrg[key]
         if len(calc['avrg']) > 1:
-            self._addEntry(calc['avrg'])
-            timer.emptyData(self)
+            self.service._addEntry(calc['avrg'])
+            timer.emptyData(fakegato)
         return calc['avrg']
 
     def select_types(self, params): # callback
         backLog = (lambda: [], lambda: params['backLog'])['backLog' in params]()
         immediate = params['immediate']
-        fakegato = self
+        fakegato = self.service
         actualEntry = {}
         if len(backLog) != 0:
             if immediate == None:
@@ -264,7 +266,7 @@ class FakeGatoHistory():
                 actualEntry['time'] = backLog[0]['time']
                 actualEntry['status'] = backLog[0]['status']
             logging.info("**Fakegato-timer callback: {0}, immediate: {1}, entry: {2} ****".format(fakegato.accessoryName, immediate, actualEntry)) 
-            self._addEntry(actualEntry)
+            self.service._addEntry(actualEntry)
 
     def sendHistory(self, address):
         if address != 0:
