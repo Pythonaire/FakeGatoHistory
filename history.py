@@ -225,38 +225,36 @@ class FakeGatoHistory():
         backLog = (lambda: [], lambda: params['backLog'])['backLog' in params]()
         previousAvrg = (lambda: {}, lambda: params['previousAvrg'])['previousAvrg' in params]()
         timer = params['timer']
-        fakegato = self.service
         calc = {
 		    	'sum': {},
 			    'num': {},
 			    'avrg': {}
 		        }
-        if len(backLog) != 0:
-            for h in backLog: #list
-                for key in h: #dict
-                    if key != 'time':
-                        if not key in calc['sum']:
-                            calc['sum'][key] = 0
-                        if not key in calc['num']:
-                            calc['num'][key] = 0
-                        calc['sum'][key] += h[key]
-                        calc['num'][key] += 1
-                        calc['avrg'][key] = precisionRound(calc['sum'][key] / calc['num'][key], 2)
+            # ex: backLog: [{'time': 1609237191, 'power': 1000}, {'time': 1609237196, 'power': 2000}]
+        for dict in backLog: #list
+            for key, val in dict.items(): #dict
+                if key != 'time':
+                    if not key in calc['sum']:
+                        calc['sum'][key] = 0
+                    if not key in calc['num']:
+                        calc['num'][key] = 0
+                    calc['sum'][key] += val
+                    calc['num'][key] += 1
+                    calc['avrg'][key] = precisionRound(calc['sum'][key] / calc['num'][key], 2)
         calc['avrg']['time'] = round(time.time())
         if self.disableRepeatLastData == False:
-            for key in previousAvrg:
+            for key, val in previousAvrg.items():
                 if key != 'time':
                     if len(backLog) == 0 or (key not in calc['avrg']):
                         calc['avrg'][key] = previousAvrg[key]
         if len(calc['avrg']) > 1:
-            self.service._addEntry(calc['avrg'])
-            timer.emptyData(fakegato)
+            self._addEntry(calc['avrg'])
+            timer.emptyData(self)
         return calc['avrg']
 
     def select_types(self, params): # callback
         backLog = (lambda: [], lambda: params['backLog'])['backLog' in params]()
         immediate = params['immediate']
-        fakegato = self.service
         actualEntry = {}
         if len(backLog) != 0:
             if immediate == None:
@@ -266,7 +264,7 @@ class FakeGatoHistory():
                 actualEntry['time'] = backLog[0]['time']
                 actualEntry['status'] = backLog[0]['status']
             logging.info("**Fakegato-timer callback: {0}, immediate: {1}, entry: {2} ****".format(fakegato.accessoryName, immediate, actualEntry)) 
-            self.service._addEntry(actualEntry)
+            self._addEntry(actualEntry)
 
     def sendHistory(self, address):
         if address != 0:
