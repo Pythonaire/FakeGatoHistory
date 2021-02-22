@@ -104,6 +104,7 @@ class FakeGatoHistory():
         self.accessoryType = accessoryType
         self.entry2address = lambda e: e % self.memorySize
         
+        
         if isinstance(optionalParams, dict):
             # javascript ternary equivalent with Lambda
             #  condition ? true : false
@@ -112,12 +113,13 @@ class FakeGatoHistory():
             self.minutes = (lambda: 10, lambda: optionalParams['minutes'])['minutes' in optionalParams]()
             self.disableTimer = (lambda: False, lambda: optionalParams['disableTimer'])['disableTimer' in optionalParams]()
             self.disableRepeatLastData = (lambda: False, lambda: optionalParams['disableRepeatLastData'])['disableRepeatLastData' in optionalParams]()
+            self.chars = (lambda: [], lambda: optionalParams['char'])['char' in optionalParams]()
         else:
             self.size = 4032
             self.minutes = 10
             self.disableTimer = False
-            self.chars = None
             self.disableRepeatLastData = False
+            self.chars = []
             # use logging.info instead of optionalParams.log || self.Accessory.log || {};
 
         if self.disableTimer == False:
@@ -158,8 +160,6 @@ class FakeGatoHistory():
             self.accessoryType116 = "05 0102 1102 1001 1201 1d01"
             self.accessoryType117 = "1f"
         elif self.accessoryType == TYPE_CUSTOM:
-            if self.chars == None:
-                logging.info(' **** missing custom characteristic definition ******')
             sorter = []
             for x in self.chars:
                 if x == 'temp': 
@@ -229,20 +229,20 @@ class FakeGatoHistory():
 			    'num': {},
 			    'avrg': {}
 		        }
-        if len(backLog) != 0:
-            for h in backLog: #list
-                for key in h: #dict
-                    if key != 'time':
-                        if not key in calc['sum']:
-                            calc['sum'][key] = 0
-                        if not key in calc['num']:
-                            calc['num'][key] = 0
-                        calc['sum'][key] += h[key]
-                        calc['num'][key] += 1
-                        calc['avrg'][key] = precisionRound(calc['sum'][key] / calc['num'][key], 2)
+            # ex: backLog: [{'time': 1609237191, 'power': 1000}, {'time': 1609237196, 'power': 2000}]
+        for dict in backLog: #list
+            for key, val in dict.items(): #dict
+                if key != 'time':
+                    if not key in calc['sum']:
+                        calc['sum'][key] = 0
+                    if not key in calc['num']:
+                        calc['num'][key] = 0
+                    calc['sum'][key] += val
+                    calc['num'][key] += 1
+                    calc['avrg'][key] = precisionRound(calc['sum'][key] / calc['num'][key], 2)
         calc['avrg']['time'] = round(time.time())
         if self.disableRepeatLastData == False:
-            for key in previousAvrg:
+            for key, val in previousAvrg.items():
                 if key != 'time':
                     if len(backLog) == 0 or (key not in calc['avrg']):
                         calc['avrg'][key] = previousAvrg[key]
@@ -254,7 +254,6 @@ class FakeGatoHistory():
     def select_types(self, params): # callback
         backLog = (lambda: [], lambda: params['backLog'])['backLog' in params]()
         immediate = params['immediate']
-        fakegato = self
         actualEntry = {}
         if len(backLog) != 0:
             if immediate == None:
