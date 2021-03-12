@@ -240,7 +240,7 @@ class FakeGatoHistory():
                     calc['sum'][key] += val
                     calc['num'][key] += 1
                     calc['avrg'][key] = precisionRound(calc['sum'][key] / calc['num'][key], 2)
-        calc['avrg']['time'] = time.time()
+        calc['avrg']['time'] = int(round(time.time()))
         if self.disableRepeatLastData == False:
             for key, val in previousAvrg.items():
                 if key != 'time':
@@ -257,7 +257,7 @@ class FakeGatoHistory():
         actualEntry = {}
         if len(backLog) != 0:
             if immediate == None:
-                actualEntry['time'] = time.time()
+                actualEntry['time'] = int(round(time.time()))
                 actualEntry['status'] = backLog[0]['status']
             else:
                 actualEntry['time'] = backLog[0]['time']
