@@ -240,7 +240,7 @@ class FakeGatoHistory():
                     calc['sum'][key] += val
                     calc['num'][key] += 1
                     calc['avrg'][key] = precisionRound(calc['sum'][key] / calc['num'][key], 2)
-        calc['avrg']['time'] = round(time.time())
+        calc['avrg']['time'] = time.time()
         if self.disableRepeatLastData == False:
             for key, val in previousAvrg.items():
                 if key != 'time':
@@ -257,7 +257,7 @@ class FakeGatoHistory():
         actualEntry = {}
         if len(backLog) != 0:
             if immediate == None:
-                actualEntry['time'] = round(time.time())
+                actualEntry['time'] = time.time()
                 actualEntry['status'] = backLog[0]['status']
             else:
                 actualEntry['time'] = backLog[0]['time']
@@ -363,7 +363,7 @@ class FakeGatoHistory():
         self.entry2address = lambda val: val % self.memorySize
         if (self.currentEntry <= self.lastEntry) and (self.transfer == True):
             self.memoryAddress = self.entry2address(self.currentEntry)
-            for x in range(10): # 10 ?? -> max 10 values can send per action
+            for x in self.history:
                 if self.history[self.memoryAddress].get('setRefTime') == 1 or self.setTime == True or self.currentEntry == self.firstEntry +1:
                     self.dataStream  += (",15{0} 0100 0000 81{1}0000 0000 00 0000".format(
                         format(int(swap32(self.currentEntry)), '08X'), 
