@@ -262,7 +262,7 @@ class FakeGatoHistory():
             else:
                 actualEntry['time'] = backLog[0]['time']
                 actualEntry['status'] = backLog[0]['status']
-            logging.info("**Fakegato-timer callback: {0}, immediate: {1}, entry: {2} ****".format(fakegato.accessoryName, immediate, actualEntry)) 
+            logging.info("**Fakegato-timer callback: {0}, immediate: {1}, entry: {2} ****".format(self.accessoryName, immediate, actualEntry)) 
             self._addEntry(actualEntry)
 
     def sendHistory(self, address):
@@ -363,7 +363,8 @@ class FakeGatoHistory():
         self.entry2address = lambda val: val % self.memorySize
         if (self.currentEntry <= self.lastEntry) and (self.transfer == True):
             self.memoryAddress = self.entry2address(self.currentEntry)
-            for x in self.history:
+            for x in self.history: # 10 ?? -> max 10 values can send per action
+            #for x in range(10): # 10 ?? -> max 10 values can send per action
                 if self.history[self.memoryAddress].get('setRefTime') == 1 or self.setTime == True or self.currentEntry == self.firstEntry +1:
                     self.dataStream  += (",15{0} 0100 0000 81{1}0000 0000 00 0000".format(
                         format(int(swap32(self.currentEntry)), '08X'), 
@@ -434,13 +435,13 @@ class FakeGatoHistory():
                                 for i in range(len(self.signatures)):
                                     if self.signatures[i]['entry'] == key:
                                         if self.signatures[i]['length'] == 8:
-                                            result[x] = ('{0}'.format(swap32(int(value * self.signatures[i]['factor'])), '08X'))
+                                            result.append(format(swap32(int(value * self.signatures[i]['factor'])), '08X'))
                                             break
                                         elif self.signatures[i]['length'] == 4:
-                                            result[x] = ('{0}'.format(swap16(int(value * self.signatures[i]['factor'])), '04X'))
+                                            result.append(format(swap16(int(value * self.signatures[i]['factor'])), '04X'))
                                             break
                                         elif self.signatures[i]['length'] == 2:
-                                            result[x] = ('{0}'.format(value * self.signatures[i]['factor'], '02X'))
+                                            result.append(format(value * self.signatures[i]['factor'], '02X'))
                                             break
                                         bitmask += round(math.pow(2, i))
                         a = ''
