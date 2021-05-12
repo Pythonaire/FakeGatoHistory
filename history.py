@@ -108,12 +108,13 @@ class FakeGatoHistory():
         if isinstance(optionalParams, dict):
             # javascript ternary equivalent with Lambda
             #  condition ? true : false
-            # (lambda: False, lambda: true)[condition]()
-            self.size = (lambda: 4032, lambda: optionalParams['size'])['size' in optionalParams]()
-            self.minutes = (lambda: 10, lambda: optionalParams['minutes'])['minutes' in optionalParams]()
-            self.disableTimer = (lambda: False, lambda: optionalParams['disableTimer'])['disableTimer' in optionalParams]()
-            self.disableRepeatLastData = (lambda: False, lambda: optionalParams['disableRepeatLastData'])['disableRepeatLastData' in optionalParams]()
-            self.chars = (lambda: [], lambda: optionalParams['char'])['char' in optionalParams]()
+            # (lambda: False, lambda: true)[condition]() or
+            # (if_test_is_false, if_test_is_true)[test]
+            self.size=(4032, optionalParams['size'])['size' in optionalParams]
+            self.minutes = (10, optionalParams['minutes'])['minutes' in optionalParams]
+            self.disableTimer = (False, optionalParams['disableTimer'])['disableTimer' in optionalParams]
+            self.disableRepeatLastData = (False, optionalParams['disableRepeatLastData'])['disableRepeatLastData' in optionalParams]
+            self.chars = ([], optionalParams['char'])['char' in optionalParams]
         else:
             self.size = 4032
             self.minutes = 10
@@ -221,8 +222,8 @@ class FakeGatoHistory():
         self.S2W2.setter_callback = self.setCurrentS2W2
 
     def calculateAverage(self, params): # callback
-        backLog = (lambda: [], lambda: params['backLog'])['backLog' in params]()
-        previousAvrg = (lambda: {}, lambda: params['previousAvrg'])['previousAvrg' in params]()
+        backLog = ([], params['backLog'])['backLog' in params]
+        previousAvrg = ({}, params['previousAvrg'])['previousAvrg' in params]
         timer = params['timer']
         calc = {
 		    	'sum': {},
@@ -252,7 +253,7 @@ class FakeGatoHistory():
         return calc['avrg']
 
     def select_types(self, params): # callback
-        backLog = (lambda: [], lambda: params['backLog'])['backLog' in params]()
+        backLog = ([], params['backLog'])['backLog' in params]
         immediate = params['immediate']
         actualEntry = {}
         if len(backLog) != 0:
