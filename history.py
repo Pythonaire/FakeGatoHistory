@@ -110,11 +110,17 @@ class FakeGatoHistory():
             #  condition ? true : false
             # (lambda: False, lambda: true)[condition]() or
             # (if_test_is_false, if_test_is_true)[test]
-            self.size=(lambda: 4032, lambda:optionalParams['size'])['size' in optionalParams]()
-            self.minutes = (lambda: 10, lambda: optionalParams['minutes'])['minutes' in optionalParams]()
-            self.disableTimer = (lambda: False, lambda: optionalParams['disableTimer'])['disableTimer' in optionalParams]()
-            self.disableRepeatLastData = (lambda: False, lambda: optionalParams['disableRepeatLastData'])['disableRepeatLastData' in optionalParams]()
-            self.chars = (lambda:[], lambda: optionalParams['char'])['char' in optionalParams]()
+            #self.size=(lambda: 4032, lambda:optionalParams['size'])['size' in optionalParams]()
+            #self.minutes = (lambda: 10, lambda: optionalParams['minutes'])['minutes' in optionalParams]()
+            #self.disableTimer = (lambda: False, lambda: optionalParams['disableTimer'])['disableTimer' in optionalParams]()
+            #self.disableRepeatLastData = (lambda: False, lambda: optionalParams['disableRepeatLastData'])['disableRepeatLastData' in optionalParams]()
+            #self.chars = (lambda:[], lambda: optionalParams['char'])['char' in optionalParams]()
+
+            self.size= optionalParams['size'] if 'size' in optionalParams else 4032
+            self.minutes = optionalParams['minutes'] if 'minutes' in optionalParams else 10
+            self.disableTimer = optionalParams['disableTimer'] if 'disableTimer' in optionalParams else False
+            self.disableRepeatLastData = optionalParams['disableRepeatLastData'] if 'disableRepeatLastData' in optionalParams else False
+            self.chars = optionalParams['char'] if 'char' in optionalParams else []
         else:
             self.size = 4032
             self.minutes = 10
@@ -222,8 +228,11 @@ class FakeGatoHistory():
         self.S2W2.setter_callback = self.setCurrentS2W2
 
     def calculateAverage(self, params): # callback
-        backLog = (lambda:[], lambda: params['backLog'])['backLog' in params]()
-        previousAvrg = (lambda:{}, lambda:params['previousAvrg'])['previousAvrg' in params]()
+        #backLog = (lambda:[], lambda: params['backLog'])['backLog' in params]()
+        #previousAvrg = (lambda:{}, lambda:params['previousAvrg'])['previousAvrg' in params]()
+
+        backLog = params['backLog'] if 'backLog' in params else []
+        previousAvrg = params['previousAvrg'] if 'previousAvrg' in params else {}
         timer = params['timer']
         calc = {
 		    	'sum': {},
@@ -253,7 +262,9 @@ class FakeGatoHistory():
         return calc['avrg']
 
     def select_types(self, params): # callback
-        backLog = (lambda:[], lambda: params['backLog'])['backLog' in params]()
+        #backLog = (lambda:[], lambda: params['backLog'])['backLog' in params]()
+
+        backLog = params['backLog'] if 'backLog' in params else []
         immediate = params['immediate']
         actualEntry = {}
         if len(backLog) != 0:
