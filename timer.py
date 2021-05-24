@@ -19,7 +19,7 @@ class FakeGatoTimer():
         if params is None:
             params = {}
         self.subscribedServices = []
-        self.minutes = (10, params['minutes'])['minutes' in params]
+        self.minutes = (lambda: 10, lambda: params['minutes'])['minutes' in params]()
         self.running = False
         self.intervalID = None
         
@@ -93,7 +93,7 @@ class FakeGatoTimer():
     def addData(self, params):
         data = params['entry']
         service = params['service']
-        immediateCallback = (False, params['immediateCallback'])['immediateCallback' in params]
+        immediateCallback = (lambda:False, lambda:params['immediateCallback'])['immediateCallback' in params]()
         if immediateCallback == True: # door or motion -> replace
             if len(self.getSubscriber(service)['backLog']) == 0:
                 self.getSubscriber(service)['backLog'].append(data)
