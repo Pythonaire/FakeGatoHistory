@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-import logging, os, time, math, re, base64
+import logging, os, time, math, re, base64, uuid
 from pyhap.accessory import Accessory
 from timer import FakeGatoTimer
+from storage import FakeGatoStorage
+
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
@@ -64,6 +66,7 @@ services.json:
 EPOCH_OFFSET = 978307200
 TYPE_ENERGY = 'energy'
 TYPE_ROOM = 'room'
+TYPE_ROOM2 = 'room2'
 TYPE_WEATHER = 'weather'
 TYPE_DOOR = 'door'
 TYPE_MOTION = 'motion'
@@ -94,6 +97,27 @@ def swap16(i):
 def swap32(i):
     return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF)
 
+def isValid(value):
+    try:
+        uuid.UUID(value)
+        return True
+    except ValueError:
+        return False
+
+def toLongFormUUID(uuid, base = '-0000-1000-8000-0026BB765291'):
+    if isValid(uuid) == True:
+        return uuid.upper()
+    elif isValid(uuid+base) == False:
+        logging.info("uuid was not a valid UUID or short form UUID: {0}:".format(uuid))
+    elif isValid('00000000' + base) == False:
+        logging.info("base was not a valid base UUID: {0}:".format(base))
+    return (('00000000' + uuid)[:-8] + base).upper()
+
+def toShortFormUUID(uuid, base = '-0000-1000-8000-0026BB765291'):
+    uuid = toLongFormUUID(uuid, base)
+    return uuid[0, 8]
+
+
 
 class FakeGatoHistory():
     def __init__(self,accessoryType, accessory, optionalParams=None, *args, **kwargs):
@@ -118,6 +142,9 @@ class FakeGatoHistory():
 
             self.size= optionalParams['size'] if 'size' in optionalParams else 4032
             self.minutes = optionalParams['minutes'] if 'minutes' in optionalParams else 10
+            self.storage = optionalParams['fs'] if 'fs' in optionalParams else None
+            self.filename = optionalParams['filename'] if 'filename' in optionalParams else self.accessoryName + '_backup'
+            self.path = optionalParams['path'] if 'path' in optionalParams else os.getcwd()
             self.disableTimer = optionalParams['disableTimer'] if 'disableTimer' in optionalParams else False
             self.disableRepeatLastData = optionalParams['disableRepeatLastData'] if 'disableRepeatLastData' in optionalParams else False
             self.chars = optionalParams['char'] if 'char' in optionalParams else []
@@ -147,6 +174,11 @@ class FakeGatoHistory():
             self.accessoryType117 = "0f"
             if self.disableTimer == False:
                 self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
+        elif self.accessoryType == TYPE_ROOM2:
+            self.accessoryType116 = "07 0102 0202 2202 2901 2501 2302 2801"
+            self.accessoryType117 = "7f"
+            if self.disableTimer == False:
+                self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
         elif self.accessoryType == TYPE_DOOR:
             self.accessoryType116 = "01 0601"
             self.accessoryType117 = "01"
@@ -167,37 +199,43 @@ class FakeGatoHistory():
             self.accessoryType116 = "05 0102 1102 1001 1201 1d01"
             self.accessoryType117 = "1f"
         elif self.accessoryType == TYPE_CUSTOM:
-            sorter = []
-            for x in self.chars:
-                if x == 'temp': 
-                    self.signatures.append({'signature': '0102', 'length': 4, 'factor': 100, 'entry': 'temp'})
-                    sorter.append('0102')
-                elif x == 'hum':
-                    self.signatures.append({'signature': '0202', 'length': 4, 'factor': 100, 'entry': 'humidity'})
-                    sorter.append('0202')
-                elif x == 'power':
-                    self.signatures.append({'signature': '0702', 'length': 4, 'factor': 10, 'entry': 'power'})
-                    sorter.append('0702')
-                elif x == 'pressure':
-                    self.signatures.append({'signature': '0302', 'length': 4, 'factor': 10, 'entry': 'pressure'})
-                    sorter.append('0202')
-                elif x == 'ppm':
-                    self.signatures.append({'signature': '0702', 'length': 4, 'factor': 10, 'entry': 'ppm'})
-                    sorter.append('0702')
-                elif x == 'contact':
-                    self.signatures.append({'signature': '0602', 'length': 2, 'factor': 1, 'entry': 'contact'})
-                    sorter.append('0602')
-                elif x == 'switch':
-                    self.signatures.append({'signature': '0e01', 'length': 2, 'factor': 1, 'entry': 'status'})
-                    sorter.append('0e01')
-                elif x == 'motion':
-                    self.signatures.append({'signature': '0c01', 'length': 2, 'factor': 1, 'entry': 'motion'})
-                    sorter.append('0c01')
-            sorter.sort()
-            t = ''
-            for i in sorter:
-                t = t + i + ' '
-            self.accessoryType116 =(' 0' + str(len(self.signatures)) + ' ' + t)
+            self.signatures = []
+            sorted_signature = []
+            for x in self.service:
+                for y in x.get_characteristic(x):
+                    self.uuid = isValid(y['UUID'])
+                    if self.uuid== '00000011-0000-1000-8000-0026BB765291': # CurrentTemperature
+                        self.signatures.append({'signature': '0102', 'length': 4, 'uuid': toLongFormUUID(self.uuid), 'factor': 100, 'entry': 'temp'})
+                        sorted_signature.append('0102')
+                    elif self.uuid == '000000C8-0000-1000-8000-0026BB765291': # VOCDensity
+                        self.signatures.append({'signature': '2202', 'length': 4, 'uuid': toLongFormUUID(self.uuid), 'factor': 1, 'entry': 'voc'})
+                        sorted_signature.append('2202')
+                    elif self.uuid == '00000010-0000-1000-8000-0026BB765291': #CurrentRelativeHumidity
+                        self.signatures.append({'signature': '0202', 'length': 4, 'uuid': toLongFormUUID(self.uuid), 'factor': 100, 'entry': 'humidity'})
+                        sorted_signature.append('0202')
+                    elif self.uuid == 'E863F10F-079E-48FF-8F27-9C2605A29F52': #AtmosphericPressure
+                        self.signatures.append({'signature': '0302', 'length': 4, 'uuid': toLongFormUUID(self.uuid),'factor': 10, 'entry': 'pressure'})
+                        sorted_signature.append('0302')
+                    elif self.uuid == 'E863F10B-079E-48FF-8F27-9C2605A29F52': #EveAirQuality
+                        self.signatures.append({'signature': '0702', 'length': 4, 'uuid': toLongFormUUID(self.uuid),'factor': 10, 'entry': 'ppm'})
+                        sorted_signature.append('0702')
+                    elif self.uuid == '0000006A-0000-1000-8000-0026BB765291': #ContactSensorState
+                        self.signatures.append({'signature': '0601', 'length': 2, 'uuid': toLongFormUUID(self.uuid), 'factor': 1, 'entry': 'contact'})
+                        sorted_signature.append('0601')
+                    elif self.uuid == 'E863F10D-079E-48FF-8F27-9C2605A29F52': #CurrentConsumption
+                        self.signatures.append({'signature': '0702', 'length': 4, 'uuid': toLongFormUUID(self.uuid), 'factor': 10, 'entry': 'power'})
+                        sorted_signature.append('0702')
+                    elif self.uuid == '00000025-0000-1000-8000-0026BB765291': #Switch On
+                        self.signatures.append({'signature': '0e01', 'length': 2, 'uuid': toLongFormUUID(self.uuid), 'factor': 1, 'entry': 'status'})
+                        sorted_signature.append('0e01')
+                    elif self.uuid == '00000022-0000-1000-8000-0026BB765291': #MotionDetected
+                        self.signatures.append({'signature': '0c01', 'length': 2, 'uuid': toLongFormUUID(self.uuid), 'factor': 1, 'entry': 'motion'})
+                        sorted_signature.append('0c01')
+
+                # here we need just the sorted 'signature' and count, self.signature will needed by getCurrentS2R2
+            sorted_signature.sort()
+            sorted_string = (i + ' ' for i in sorted_signature)
+            self.accessoryType116 =' 0' + str(len(sorted_signature)) + ' ' + sorted_string
             logging.info("Services: {0}:".format(self.accessoryType116))
             if self.disableTimer == False:
                 self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
@@ -250,6 +288,9 @@ class FakeGatoHistory():
                     calc['sum'][key] += val
                     calc['num'][key] += 1
                     calc['avrg'][key] = precisionRound(calc['sum'][key] / calc['num'][key], 2)
+                    if key == 'voc':
+                        calc['avrg'][key] = int(calc['avrg'][key])
+
         calc['avrg']['time'] = int(round(time.time()))
         if self.disableRepeatLastData == False:
             for key, val in previousAvrg.items():
@@ -299,10 +340,15 @@ class FakeGatoHistory():
             else:
                 self._addEntry({'time': self.entry['time'], 'temp': self.entry['temp'], 'humidity': self.entry['humidity'], 'pressure': self.entry['pressure']})
         elif self.accessoryType == TYPE_ROOM:
-                if self.disableTimer == False:
-                    self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
-                else:
-                    self._addEntry({'time': self.entry['time'], 'temp': self.entry['temp'], 'humidity': self.entry['humidity'], 'ppm': self.entry['ppm']})
+            if self.disableTimer == False:
+                self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
+            else:
+                self._addEntry({'time': self.entry['time'], 'temp': self.entry['temp'], 'humidity': self.entry['humidity'], 'ppm': self.entry['ppm']})
+        elif self.accessoryType == TYPE_ROOM2:
+            if self.disableTimer == False:
+                self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
+            else:
+                self._addEntry({'time': self.entry['time'], 'temp': self.entry['temp'], 'humidity': self.entry['humidity'], 'ppm': self.entry['voc']})
         elif self.accessoryType == TYPE_ENERGY:
             if self.disableTimer == False:
                 self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
@@ -407,6 +453,14 @@ class FakeGatoHistory():
 			            format(swap16(int(self.history[self.memoryAddress].get('temp') * 100)), '04X'),
 			            format(swap16(int(self.history[self.memoryAddress].get('humidity') * 100)), '04X'),
 			            format(swap16(int(self.history[self.memoryAddress].get('ppm'))), '04X'))
+                        )
+                    elif self.accessoryType == TYPE_ROOM2:
+                        self.dataStream += (",15 {0}{1}{2}{3}{4}{5}0054 a80f01".format(format(swap32(int(self.currentEntry)), '08X'),
+                        format(swap32(int(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET)), '08x'),
+                        self.accessoryType117,
+                        format(swap16(int(self.history[self.memoryAddress].get('temp') * 100)), '04X'),
+                        format(swap16(int(self.history[self.memoryAddress].get('humidity') * 100)), '04X'),
+                        format(swap16(int(self.history[self.memoryAddress].get('voc'))), '04X'))
                         )
                     elif self.accessoryType == TYPE_DOOR or self.accessoryType == TYPE_MOTION or self.accessoryType == TYPE_SWITCH:
                         self.dataStream += (",0b {0}{1}{2}{3}".format(format(swap32(int(self.currentEntry)), '08X'),
