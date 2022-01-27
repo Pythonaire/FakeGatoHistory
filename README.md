@@ -1,28 +1,138 @@
 # FakeGatoHistory
 
-Python transcoded, to work with HAP-Python accessory classes.
+Based on the fabulous work of <https://github.com/simont77/fakegato-history> to work with HAP-Python <https://github.com/ikalchev/HAP-python>.
 
-Based on the fabulous work of <https://github.com/simont77/fakegato-history>. In contrast to the original javascript, this translated version does not use persistance storage of long history data. See  <https://github.com/simont77/fakegato-history> for limitation and examples.
-It is tested so fare with 'room', 'weather' and 'energy'.
+## Differences so fare
 
-I use this in combination HAP-Python <https://github.com/ikalchev/HAP-python>, a Python-based bridge. If you are using special, none HAP-default services and characteristics you need to define these under "/usr/local/lib/python3.x/dist-packages/pyhap/ressources". Additional, in these files you have to declare the history service and characteristics (see history.py) to work with.
+Store long history history data is not implemented so fare. 'storage.py' is the transcoded version, but not tested and binded to the core 'history.py'.
+By default, 'history.py' hold 4032 values in the memory, before overwriting. Eve needs values each 10 minutes and display the history data over 14 days. So 4032 should be enough.
 
-Then, you can add:
+## Tested
+
+It is tested and works well for Room, Energy and Weather data. 
+
+
+## How To
+
+HAP-Python holds the default HAP services and characteristics in two files 'services.json' and 'characteristics.json'.
+After installing HAP-Python these files are under "/usr/local/lib/python3.x/dist-packages/pyhap/ressources". If you want to use Eve services and characteristics, you have to add these services and characteristics.
+
+services.json:
+
+````
+"History": {
+    "OptionalCharacteristics": [
+     "Name"
+    ],
+   "RequiredCharacteristics": [
+   "S2R1",
+   "S2R2",
+   "S2W1",
+   "S2W2"
+   ],
+   "UUID": "E863F007-079E-48FF-8F27-9C2605A29F52"
+ }
+ ````
+characteristics.json
+
+````
+"S2R1": {
+      "Format" :"data",
+      "Permissions": [
+         "pr",
+	 "pw",
+         "ev",
+         "hd"
+      ],
+      "UUID": "E863F116-079E-48FF-8F27-9C2605A29F52"
+   },
+   "S2R2": {
+      "Format" :"data",
+      "Permissions": [
+         "pr",
+         "pw",
+         "ev",
+         "hd"
+      ],
+      "UUID": "E863F117-079E-48FF-8F27-9C2605A29F52"
+   },
+   "S2W1": {
+      "Format" :"data",
+      "Permissions": [
+	"pw",
+        "hd"
+      ],
+      "UUID": "E863F11C-079E-48FF-8F27-9C2605A29F52"
+   },
+   "S2W2": {
+      "Format" :"data",
+      "Permissions": [
+	"pw",
+        "hd"
+      ],
+      "UUID": "E863F121-079E-48FF-8F27-9C2605A29F52"
+   }
+   ````
+
+
+service and characteristics example Weather data based on a BME280 sensor:
+
+Eve use the standard humidity and temperature services and characteristics. You just need to add:
+
+services.json:
+
+````
+"AtmosphericPressureSensor": {
+    "OptionalCharacteristics": [
+     "Name"
+    ],
+   "RequiredCharacteristics": [
+   "AtmosphericPressure"
+   ],
+   "UUID": "E863F00A-079E-48FF-8F27-9C2605A29F52"
+   }
+````
+
+characteristics.json:
+
+````
+"AtmosphericPressureSensor": {
+    "OptionalCharacteristics": [
+     "Name"
+    ],
+   "RequiredCharacteristics": [
+   "AtmosphericPressure"
+   ],
+   "UUID": "E863F00A-079E-48FF-8F27-9C2605A29F52"
+   }
+
+````
+
+Then, import the history library to your script:
 
 ```#!/usr/bin/env python3
-self.History = FakeGatoHistory('room', self)
+from history import FakeGatoHistory
 ```
 
-update values like:
+Link the history to your device class:
 
 ```#!/usr/bin/env python3
-@Accessory.run_at_interval(3000)
+def __init__(self, node, *args, **kwargs): # Sensor
+        super().__init__(*args, **kwargs)
+        ....
+        self.History = FakeGatoHistory('weather', self)
+
+```
+
+Push the data:
+
+```#!/usr/bin/env python3
+
+@Accessory.run_at_interval(300)
     def run(self):
     ....
-self.History.addEntry({'time':int(round(time.time())),'temp': XXX,'humidity': XXX)})
+    self.History.addEntry({'time':int(round(time.time())),'temp':XXX,'humidity': XXX, 'pressure':XXX})
 ```
 
-To understand the example:
 
-In this example, a sensor unit (eg. PlantSensor) send fresh data each 30 minutes to a 433 Mhz bridge unit. The bridge store these data in a dictionary. The "GardenValue" class call each 5 minutes for fresh data via getCache() in the NODE_CACHE dictionary.
-This a working example. Have fun.
+Have fun.
