@@ -266,9 +266,6 @@ class FakeGatoHistory():
         self.S2W2.setter_callback = self.setCurrentS2W2
 
     def calculateAverage(self, params): # callback
-        #backLog = (lambda:[], lambda: params['backLog'])['backLog' in params]()
-        #previousAvrg = (lambda:{}, lambda:params['previousAvrg'])['previousAvrg' in params]()
-
         backLog = params['backLog'] if 'backLog' in params else []
         previousAvrg = params['previousAvrg'] if 'previousAvrg' in params else {}
         timer = params['timer']
