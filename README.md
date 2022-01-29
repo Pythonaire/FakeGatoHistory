@@ -18,7 +18,7 @@ It is tested and works well for Room, Energy and Weather data.
 ## How To
 
 HAP-Python holds the default HAP services and characteristics in two files 'services.json' and 'characteristics.json'.
-After installing HAP-Python these files are under "/usr/local/lib/python3.x/dist-packages/pyhap/ressources". If you want to use Eve services and characteristics, you have to add these services and characteristics.
+After installing HAP-Python, these files are under "/usr/local/lib/python3.x/dist-packages/pyhap/ressources". If you want to use Eve services and characteristics, you have to add these services and characteristics.
 
 services.json:
 
