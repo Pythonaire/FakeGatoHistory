@@ -36,12 +36,13 @@ class Weather(Accessory):
     @Accessory.run_at_interval(300)
     def run(self):
         '''
-        in this example function getCache is used to pull sensor data form a sensor node defined by self.node
+        in this example function getCache is used to pull sensor data from a sensor node, defined by self.node.
+        The return is a dictionary 
+        {'B':Battery,'AT':AirTemperature,'AH':AirHumidity,'AP':AirPressure}
 
-        recv = getCache(str(self.node)) # pull sensor date
+        recv = getCache(str(self.node)) # pull sensor data
         logging.info('NodeData Weather :{0}'.format(recv[str(self.node)]))
-        #{'B':Battery,'AT':AirTemperature,'AH':AirHumidity,'AP':AirPressure,SH':SoilHumidity}
-        NodeData = {"B": 0, "AT":0, "AH": 0, "AP": 0, "SH":0} if recv[str(self.node)] == None else recv[str(self.node)]
+        NodeData = {"B": 0, "AT":0, "AH": 0, "AP": 0} if recv[str(self.node)] == None else recv[str(self.node)]
         BattStatus = 1 if NodeData["B"]<=0 else 0
         '''
         self.BattStatus.set_value(BattStatus)
@@ -50,7 +51,7 @@ class Weather(Accessory):
         self.AirPressure.set_value(NodeData["AP"])
         self.BattLevel.set_value(NodeData["B"])
         self.HistoryTerrace.addEntry({'time':int(round(time.time())),'temp':NodeData["AT"],'humidity': NodeData["AH"], 'pressure':NodeData["AP"]})
-        forward = {'Temp': NodeData["AT"]} 
+        
     
         
     def stop(self):
