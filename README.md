@@ -96,14 +96,17 @@ services.json:
 characteristics.json:
 
 ````
-"AtmosphericPressureSensor": {
-    "OptionalCharacteristics": [
-     "Name"
-    ],
-   "RequiredCharacteristics": [
-   "AtmosphericPressure"
-   ],
-   "UUID": "E863F00A-079E-48FF-8F27-9C2605A29F52"
+"AtmosphericPressure": {
+      "Format": "float",
+      "Permissions": [
+         "pr",
+         "ev"
+      ],
+      "UUID": "E863F10F-079E-48FF-8F27-9C2605A29F52",
+      "unit": "hPa",
+      "maxValue": 1200.0,
+      "minValue": 700.0,
+      "minStep": 0.1
    }
 
 ````
@@ -134,5 +137,6 @@ Push the data:
     self.History.addEntry({'time':int(round(time.time())),'temp':XXX,'humidity': XXX, 'pressure':XXX})
 ```
 
+See 'Class Example.py' for more information. 
 
 Have fun.
