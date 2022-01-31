@@ -2,7 +2,6 @@
 import logging, os, time, math, re, base64, uuid
 from pyhap.accessory import Accessory
 from timer import FakeGatoTimer
-from storage import FakeGatoStorage
 
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
@@ -142,18 +141,13 @@ class FakeGatoHistory():
 
             self.size= optionalParams['size'] if 'size' in optionalParams else 4032
             self.minutes = optionalParams['minutes'] if 'minutes' in optionalParams else 10
-            self.storage = optionalParams['fs'] if 'fs' in optionalParams else None
-            self.filename = optionalParams['filename'] if 'filename' in optionalParams else self.accessoryName + '_backup'
-            self.path = optionalParams['path'] if 'path' in optionalParams else os.getcwd()
             self.disableTimer = optionalParams['disableTimer'] if 'disableTimer' in optionalParams else False
             self.disableRepeatLastData = optionalParams['disableRepeatLastData'] if 'disableRepeatLastData' in optionalParams else False
-            self.chars = optionalParams['char'] if 'char' in optionalParams else []
         else:
             self.size = 4032
             self.minutes = 10
             self.disableTimer = False
             self.disableRepeatLastData = False
-            self.chars = []
             # use logging.info instead of optionalParams.log || self.Accessory.log || {};
 
         if self.disableTimer == False:
@@ -266,6 +260,9 @@ class FakeGatoHistory():
         self.S2W2.setter_callback = self.setCurrentS2W2
 
     def calculateAverage(self, params): # callback
+        #backLog = (lambda:[], lambda: params['backLog'])['backLog' in params]()
+        #previousAvrg = (lambda:{}, lambda:params['previousAvrg'])['previousAvrg' in params]()
+
         backLog = params['backLog'] if 'backLog' in params else []
         previousAvrg = params['previousAvrg'] if 'previousAvrg' in params else {}
         timer = params['timer']
@@ -413,6 +410,7 @@ class FakeGatoHistory():
 
     def getInitialTime(self):
         return self.initialTime
+
 
     def getCurrentS2R2(self):
         self.entry2address = lambda val: val % self.memorySize
