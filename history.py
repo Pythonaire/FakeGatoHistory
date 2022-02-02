@@ -147,13 +147,16 @@ class FakeGatoHistory():
             # use logging.info instead of optionalParams.log || self.Accessory.log || {};
 
         if self.disableTimer == False:
-            self.globalFakeGatoTimer = FakeGatoTimer({'minutes':self.minutes})
+            self.globalFakeGatoTimer = FakeGatoTimer(self.minutes)
 
         if self.storage != None:
-            self.globalFakeGatoStorage = FakeGatoStorage(self.path, self.filename) 
-            self.persist = self.globalFakeGatoStorage.addWriter(self.service) # true if exists or create new storage
+            self.loaded = False
+            self.globalFakeGatoStorage = FakeGatoStorage(self.path, self.filename)
+            if self.load() == True: # file and data exists and readable
+                self.loaded = self.globalFakeGatoStorage.addWriter(self) # true if exists or create new storage
+                logging.info("** Write Persistance data to: {0}".format(self.filename))
         else:
-            logging.info("** Write to Persistance storage: {0}".format(self.storage)) 
+            logging.info("** No Persistance storage **") 
 
         if self.accessoryType == TYPE_WEATHER:
             self.accessoryType116 = "03 0102 0202 0302"
@@ -250,6 +253,7 @@ class FakeGatoHistory():
         self.memoryAddress = 0 
         self.dataStream = ''
         self.registerEvents()
+        self.loaded = False if self.storage == None else True
 
         
     def registerEvents(self):
@@ -262,9 +266,6 @@ class FakeGatoHistory():
         self.S2W2.setter_callback = self.setCurrentS2W2
 
     def calculateAverage(self, params): # callback
-        #backLog = (lambda:[], lambda: params['backLog'])['backLog' in params]()
-        #previousAvrg = (lambda:{}, lambda:params['previousAvrg'])['previousAvrg' in params]()
-
         backLog = params['backLog'] if 'backLog' in params else []
         previousAvrg = params['previousAvrg'] if 'previousAvrg' in params else {}
         timer = params['timer']
@@ -299,8 +300,6 @@ class FakeGatoHistory():
         return calc['avrg']
 
     def select_types(self, params): # callback
-        #backLog = (lambda:[], lambda: params['backLog'])['backLog' in params]()
-
         backLog = params['backLog'] if 'backLog' in params else []
         immediate = params['immediate']
         actualEntry = {}
@@ -430,14 +429,25 @@ class FakeGatoHistory():
                 'initialTime': self.initialTime,
                 'history': self.history,
                 'extra': self.extra}
-        self.globalFakeGatoStorage.write({'service': self.service, 'data': data})
+        self.globalFakeGatoStorage.write({'service': self, 'data': data})
 
 
-
-
-    #def load(self):
-    #    logging.info("Loading...")
-    #    self.globalFakeGatoStorage.read(self.service)
+    def load(self):
+        logging.info("Loading...")
+        data, err = self.globalFakeGatoStorage.read(self)
+        logging.info("read data from {0}: {1}".format(self.accessoryName,data))
+        if err == None:
+            self.firstEntry = data['firstEntry']
+            self.lastEntry = data['lastEntry']
+            self.usedMemory =data['usedMemory']
+            self.refTime = data['refTime']
+            self.initialTime = data['initialTime']
+            self.history = data['history']
+            self.extra = data['extra']
+            exists = True
+        else:
+            exists = False
+        return exists
 
 
     def getCurrentS2R2(self):

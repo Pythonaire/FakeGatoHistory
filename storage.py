@@ -73,8 +73,8 @@ class FakeGatoStorage():
                 for i in list:
                     data.append(json.loads(i.rstrip('\n')))
             fs.close()
-        except ValueError as err:
-            logging.info("** Fakegato-storage file could not be readed: {0}".format(err))
+        except Exception as err:
+            logging.info("**ERROR fetching persisting data restart from zero - {0}".format(err))
         return data, err
 
     def remove(self,params):

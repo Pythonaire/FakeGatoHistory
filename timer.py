@@ -15,12 +15,9 @@ def setInterval(interval):
         return decorator
 
 class FakeGatoTimer():
-    def __init__(self, params, *args, **kwargs):
-        if params is None:
-            params = {}
+    def __init__(self, minutes, *args, **kwargs):
+        self.minutes = minutes
         self.subscribedServices = []
-        #self.minutes = (lambda: 10, lambda: params['minutes'])['minutes' in params]()
-        self.minutes =  params['minutes'] if 'minutes' in params else 10
         self.running = False
         self.intervalID = None
         
