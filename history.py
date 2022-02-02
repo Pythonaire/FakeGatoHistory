@@ -2,6 +2,7 @@
 import logging, os, time, math, re, base64, uuid
 from pyhap.accessory import Accessory
 from timer import FakeGatoTimer
+from storage import FakeGatoStorage
 
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
@@ -129,18 +130,11 @@ class FakeGatoHistory():
         
         
         if isinstance(optionalParams, dict):
-            # javascript ternary equivalent with Lambda
-            #  condition ? true : false
-            # (lambda: False, lambda: true)[condition]() or
-            # (if_test_is_false, if_test_is_true)[test]
-            #self.size=(lambda: 4032, lambda:optionalParams['size'])['size' in optionalParams]()
-            #self.minutes = (lambda: 10, lambda: optionalParams['minutes'])['minutes' in optionalParams]()
-            #self.disableTimer = (lambda: False, lambda: optionalParams['disableTimer'])['disableTimer' in optionalParams]()
-            #self.disableRepeatLastData = (lambda: False, lambda: optionalParams['disableRepeatLastData'])['disableRepeatLastData' in optionalParams]()
-            #self.chars = (lambda:[], lambda: optionalParams['char'])['char' in optionalParams]()
-
             self.size= optionalParams['size'] if 'size' in optionalParams else 4032
             self.minutes = optionalParams['minutes'] if 'minutes' in optionalParams else 10
+            self.path = optionalParams['path'] if 'path' in optionalParams else os.getcwd()
+            self.filename = optionalParams['filename'] if 'path' in optionalParams else self.accessoryName + '_backup'
+            self.storage = optionalParams['storage'] if 'storage' in optionalParams else None
             self.disableTimer = optionalParams['disableTimer'] if 'disableTimer' in optionalParams else False
             self.disableRepeatLastData = optionalParams['disableRepeatLastData'] if 'disableRepeatLastData' in optionalParams else False
         else:
@@ -148,10 +142,18 @@ class FakeGatoHistory():
             self.minutes = 10
             self.disableTimer = False
             self.disableRepeatLastData = False
+            self.storage = None
+
             # use logging.info instead of optionalParams.log || self.Accessory.log || {};
 
         if self.disableTimer == False:
             self.globalFakeGatoTimer = FakeGatoTimer({'minutes':self.minutes})
+
+        if self.storage != None:
+            self.globalFakeGatoStorage = FakeGatoStorage(self.path, self.filename) 
+            self.persist = self.globalFakeGatoStorage.addWriter(self.service) # true if exists or create new storage
+        else:
+            logging.info("** Write to Persistance storage: {0}".format(self.storage)) 
 
         if self.accessoryType == TYPE_WEATHER:
             self.accessoryType116 = "03 0102 0202 0302"
@@ -407,9 +409,35 @@ class FakeGatoHistory():
         logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
         logging.info("116 {0}: {1}".format(self.accessoryName, val))
     
+        if self.storage != None:
+            self.save()
+
 
     def getInitialTime(self):
         return self.initialTime
+
+    def setExtraPersistedData(self, extra):
+        self.extra = extra
+
+    def getExtraPersistedData(self):
+        return self.extra
+
+    def save(self):
+        data = { 'firstEntry': self.firstEntry,
+                'lastEntry': self.lastEntry,
+                'usedMemory': self.usedMemory,
+                'refTime': self.refTime,
+                'initialTime': self.initialTime,
+                'history': self.history,
+                'extra': self.extra}
+        self.globalFakeGatoStorage.write({'service': self.service, 'data': data})
+
+
+
+
+    #def load(self):
+    #    logging.info("Loading...")
+    #    self.globalFakeGatoStorage.read(self.service)
 
 
     def getCurrentS2R2(self):
