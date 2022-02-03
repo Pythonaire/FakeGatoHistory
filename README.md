@@ -7,7 +7,7 @@ Based on the fabulous work of <https://github.com/simont77/fakegato-history> to 
 The original fakegato-history contains 'storage.py' for holding long time history data in a separate file in case of missing homekit connection. If you don't updating history data over long time in the ios app and restarting the service 'storage.py' push the missing values, selected by the timestamp. 
 
 By default, 'history.py' holds 4032 values in memory, before overwriting. You can increase the value count in the script. Eve history function needs values each 10 minutes and display the history data over 14 days. So 4032 x 10 minutes should be enough.
-'storage.py' is transcoded so fare, but not tested and binded to the core.
+'storage.py' is transcoded so fare, but not tested.
 
 
 ## Tested
