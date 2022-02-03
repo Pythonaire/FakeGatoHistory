@@ -77,10 +77,12 @@ class FakeGatoStorage():
             logging.info("**ERROR fetching persisting data restart from zero - {0}".format(err))
         return data, err
 
-    def remove(self,params):
-        writer = self.getWriter(params['service'])
-        if writer['storage'] == 'fs':
+    def remove(self, service):
+        writer = self.getWriter(service)
+        try:
             logging.info("** Fakegato-storage clean persist file: {0}".format(writer['filename']))
             with open(writer['filename'], 'rw+') as fs:
                 fs.truncate(0) # resize to 0
-            fs.close()
+                fs.close()
+        except Exception as err:
+            logging.info("**ERROR cleaning '{0}' - {1}".format(writer['filename'], err))

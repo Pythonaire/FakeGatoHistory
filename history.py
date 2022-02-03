@@ -153,7 +153,7 @@ class FakeGatoHistory():
             self.loaded = False
             self.globalFakeGatoStorage = FakeGatoStorage(self.path, self.filename)
             if self.load() == True: # file and data exists and readable
-                self.loaded = self.globalFakeGatoStorage.addWriter(self) # true if exists or create new storage
+                self.globalFakeGatoStorage.addWriter(self) # true if exists or create new storage
                 logging.info("** Write Persistance data to: {0}".format(self.filename))
         else:
             logging.info("** No Persistance storage **") 
@@ -409,6 +409,8 @@ class FakeGatoHistory():
         logging.info("116 {0}: {1}".format(self.accessoryName, val))
     
         if self.storage != None:
+            while self.loaded != True:
+                time.sleep(0.1)
             self.save()
 
 
@@ -421,7 +423,12 @@ class FakeGatoHistory():
     def getExtraPersistedData(self):
         return self.extra
 
+    def isHistoryLoaded(self):
+        return self.loaded
+
     def save(self):
+        while self.loaded != True:
+            time.sleep(0.1)
         data = { 'firstEntry': self.firstEntry,
                 'lastEntry': self.lastEntry,
                 'usedMemory': self.usedMemory,
@@ -448,6 +455,10 @@ class FakeGatoHistory():
         else:
             exists = False
         return exists
+
+    def cleanPersist(self):
+        logging.info("Cleaning ...")
+        self.globalFakeGatoStorage.remove(self)
 
 
     def getCurrentS2R2(self):
