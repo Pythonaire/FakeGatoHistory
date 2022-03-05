@@ -31,7 +31,7 @@ class Weather(Accessory):
         self.BattStatus = Battery.configure_char('StatusLowBattery', value = 1)
         Battery.configure_char('ChargingState', value = 2)
 
-        self.HistoryTerrace = FakeGatoHistory('weather', self)
+        self.History = FakeGatoHistory('weather', self)
         
     @Accessory.run_at_interval(300)
     def run(self):
@@ -50,7 +50,7 @@ class Weather(Accessory):
         self.AirTemperature.set_value(NodeData["AT"])
         self.AirPressure.set_value(NodeData["AP"])
         self.BattLevel.set_value(NodeData["B"])
-        self.HistoryTerrace.addEntry({'time':int(round(time.time())),'temp':NodeData["AT"],'humidity': NodeData["AH"], 'pressure':NodeData["AP"]})
+        self.History.addEntry({'time':int(round(time.time())),'temp':NodeData["AT"],'humidity': NodeData["AH"], 'pressure':NodeData["AP"]})
         
     
         
