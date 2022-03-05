@@ -12,7 +12,7 @@ By default, 'history.py' holds 4032 values in memory, before overwriting. You ca
 
 ## Tested
 
-It is tested and works well for Room, Energy and Weather data. 
+It is tested and works well for Room, Energy, Switch and Weather data. 
 
 
 ## How To
