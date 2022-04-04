@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
+from re import X
 from pyhap.accessory import Accessory
 from pyhap.const import CATEGORY_SENSOR
-import logging, requests, json, socket, time
+import logging, time
 from history import FakeGatoHistory
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
 class Weather(Accessory):
     category = CATEGORY_SENSOR
-    def __init__(self, node, *args, **kwargs): # Garden sensor nodeNumber 12
+    def __init__(self, node, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = args[1] # args[1] contained the Sensor Name given
         self.node = node # node number of the 433MHz sensor
@@ -36,23 +37,20 @@ class Weather(Accessory):
     @Accessory.run_at_interval(300)
     def run(self):
         '''
-        in this example function getCache is used to pull sensor data from a sensor node, defined by self.node.
+        in this example a external function pull sensor data from a sensor node, defined by self.node.
         The return is a dictionary 
         {'B':Battery,'AT':AirTemperature,'AH':AirHumidity,'AP':AirPressure}
-
-        recv = getCache(str(self.node)) # pull sensor data
-        logging.info('NodeData Weather :{0}'.format(recv[str(self.node)]))
-        NodeData = {"B": 0, "AT":0, "AH": 0, "AP": 0} if recv[str(self.node)] == None else recv[str(self.node)]
-        BattStatus = 1 if NodeData["B"]<=0 else 0
         '''
-        self.BattStatus.set_value(BattStatus)
-        self.AirHumidity.set_value(NodeData["AH"])
-        self.AirTemperature.set_value(NodeData["AT"])
-        self.AirPressure.set_value(NodeData["AP"])
-        self.BattLevel.set_value(NodeData["B"])
-        self.History.addEntry({'time':int(round(time.time())),'temp':NodeData["AT"],'humidity': NodeData["AH"], 'pressure':NodeData["AP"]})
-        
+        nodeBattery = getnodeData('Battery')
+        nodeHumidity = getnodeData('Humidity')
+        nodeTemperature = getnodeData('Temperature')
+        nodePressure = getnodeData('Pressure')
+        self.BattStatus.set_value(nodeBattery)
+        self.AirHumidity.set_value(nodeHumidity)
+        self.AirTemperature.set_value(nodeTemperature)
+        self.AirPressure.set_value(nodePressure)
     
+        self.History.addEntry({'time':int(round(time.time())),'temp':nodeTemperature,'humidity': nodeHumidity, 'pressure':nodePressure})
         
     def stop(self):
         logging.info('Stopping accessory.')

@@ -2,14 +2,12 @@
 import logging, os, time, math, re, base64, uuid
 from pyhap.accessory import Accessory
 from timer import FakeGatoTimer
-from storage import FakeGatoStorage
 
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
-''' add additional service and characteristics to /usr/local/lib/python3.x/dist-packages/pyhap/ressources
-
-services.json:
+''' add additional service and characteristics
+services:
 
     "History": {
     "OptionalCharacteristics": [
@@ -23,7 +21,7 @@ services.json:
    ],
    "UUID": "E863F007-079E-48FF-8F27-9C2605A29F52"
 
- characteristics.json:
+ characteristics:
 
     "S2R1": {
       "Format" :"data",
@@ -81,7 +79,6 @@ def precisionRound(num, prec):
 
 def hexToBase64(x):
     string = re.sub(r"[^0-9A-F]", '', ('' + x), flags = re.I)
-    #replace [^0-9A-F] with '' in (''+val) IGNORE case sensitivity
     b = bytearray.fromhex(string)
     return base64.b64encode(b).decode('utf-8')
     
@@ -117,46 +114,21 @@ def toShortFormUUID(uuid, base = '-0000-1000-8000-0026BB765291'):
     uuid = toLongFormUUID(uuid, base)
     return uuid[0, 8]
 
-
-
 class FakeGatoHistory():
-    def __init__(self,accessoryType, accessory, optionalParams=None, *args, **kwargs):
+    def __init__(self,accessoryType, accessory, *args, **kwargs):
         super().__init__(*args, **kwargs) 
         self.signatures = []
         self.accessory = accessory
         self.accessoryName = self.accessory.display_name
         self.accessoryType = accessoryType
+        self.memorySize = 4032
         self.entry2address = lambda e: e % self.memorySize
-        
-        
-        if isinstance(optionalParams, dict):
-            self.size= optionalParams['size'] if 'size' in optionalParams else 4032
-            self.minutes = optionalParams['minutes'] if 'minutes' in optionalParams else 10
-            self.path = optionalParams['path'] if 'path' in optionalParams else os.getcwd()
-            self.filename = optionalParams['filename'] if 'path' in optionalParams else self.accessoryName + '_backup'
-            self.storage = optionalParams['storage'] if 'storage' in optionalParams else None
-            self.disableTimer = optionalParams['disableTimer'] if 'disableTimer' in optionalParams else False
-            self.disableRepeatLastData = optionalParams['disableRepeatLastData'] if 'disableRepeatLastData' in optionalParams else False
-        else:
-            self.size = 4032
-            self.minutes = 10
-            self.disableTimer = False
-            self.disableRepeatLastData = False
-            self.storage = None
-
-            # use logging.info instead of optionalParams.log || self.Accessory.log || {};
+        self.minutes = 10
+        self.disableTimer = False
+        self.disableRepeatLastData = False
 
         if self.disableTimer == False:
             self.globalFakeGatoTimer = FakeGatoTimer(self.minutes)
-
-        if self.storage != None:
-            self.loaded = False
-            self.globalFakeGatoStorage = FakeGatoStorage(self.path, self.filename)
-            if self.load() == True: # file and data exists and readable
-                self.globalFakeGatoStorage.addWriter(self) # true if exists or create new storage
-                logging.info("** Write Persistance data to: {0}".format(self.filename))
-        else:
-            logging.info("** No Persistance storage **") 
 
         if self.accessoryType == TYPE_WEATHER:
             self.accessoryType116 = "03 0102 0202 0302"
@@ -239,11 +211,9 @@ class FakeGatoHistory():
             if self.disableTimer == False:
                 self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
 
-        
         self.firstEntry = 0
         self.lastEntry = 0
-        self.history = [None]
-        self.memorySize = self.size
+        self.history = [self.accessoryName]
         self.usedMemory = 0
         self.currentEntry = 1
         self.transfer = False
@@ -253,9 +223,7 @@ class FakeGatoHistory():
         self.memoryAddress = 0 
         self.dataStream = ''
         self.registerEvents()
-        self.loaded = False if self.storage == None else True
 
-        
     def registerEvents(self):
         logging.info('Registring Events {0}'.format(self.accessoryName))
         self.service = self.accessory.add_preload_service('History', chars =['S2R1','S2R2','S2W1','S2W2'])
@@ -361,7 +329,7 @@ class FakeGatoHistory():
             self._addEntry(self.entry)
 
     def _addEntry(self, entry):
-        self.entry2address = lambda e: e % self.memorySize
+        #self.entry2address = lambda e: e % self.memorySize
         if self.usedMemory < self.memorySize:
             self.usedMemory += 1
             self.firstEntry = 0
@@ -379,7 +347,7 @@ class FakeGatoHistory():
         if self.refTime == 0:
             self.refTime = entry['time'] - EPOCH_OFFSET
             self.history[self.lastEntry] = {'time': entry['time'],'setRefTime': 1}
-            self.initialTime = entry['time']
+            #self.initialTime = entry['time']
             self.lastEntry += 1
             self.usedMemory += 1
             self.history.append(self.lastEntry)
@@ -407,65 +375,13 @@ class FakeGatoHistory():
         logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
         logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
         logging.info("116 {0}: {1}".format(self.accessoryName, val))
-    
-        if self.storage != None:
-            while self.loaded != True:
-                time.sleep(0.1)
-            self.save()
-
-
-    def getInitialTime(self):
-        return self.initialTime
-
-    def setExtraPersistedData(self, extra):
-        self.extra = extra
-
-    def getExtraPersistedData(self):
-        return self.extra
-
-    def isHistoryLoaded(self):
-        return self.loaded
-
-    def save(self):
-        while self.loaded != True:
-            time.sleep(0.1)
-        data = { 'firstEntry': self.firstEntry,
-                'lastEntry': self.lastEntry,
-                'usedMemory': self.usedMemory,
-                'refTime': self.refTime,
-                'initialTime': self.initialTime,
-                'history': self.history,
-                'extra': self.extra}
-        self.globalFakeGatoStorage.write({'service': self, 'data': data})
-
-
-    def load(self):
-        logging.info("Loading...")
-        data, err = self.globalFakeGatoStorage.read(self)
-        logging.info("read data from {0}: {1}".format(self.accessoryName,data))
-        if err == None:
-            self.firstEntry = data['firstEntry']
-            self.lastEntry = data['lastEntry']
-            self.usedMemory =data['usedMemory']
-            self.refTime = data['refTime']
-            self.initialTime = data['initialTime']
-            self.history = data['history']
-            self.extra = data['extra']
-            exists = True
-        else:
-            exists = False
-        return exists
-
-    def cleanPersist(self):
-        logging.info("Cleaning ...")
-        self.globalFakeGatoStorage.remove(self)
 
 
     def getCurrentS2R2(self):
-        self.entry2address = lambda val: val % self.memorySize
+        #self.entry2address = lambda val: val % self.memorySize
         if (self.currentEntry <= self.lastEntry) and (self.transfer == True):
             self.memoryAddress = self.entry2address(self.currentEntry)
-            for x in self.history: # 10 ?? -> max 10 values can send per action
+            for x in self.history:
             #for x in range(10): # 10 ?? -> max 10 values can send per action
                 if self.history[self.memoryAddress].get('setRefTime') == 1 or self.setTime == True or self.currentEntry == self.firstEntry +1:
                     self.dataStream  += (",15{0} 0100 0000 81{1}0000 0000 00 0000".format(

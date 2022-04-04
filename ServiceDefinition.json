@@ -1,0 +1,834 @@
+{
+"AccessCode":{
+ "UUID":"00000260-0000-1000-8000-0026BB765291",
+ "RequiredCharacteristics": [
+   "AccessCodeControlPoint",
+    "AccessCodeSupportedConfiguration",
+    "ConfigurationState"]
+},
+"AccessControl": {
+  "UUID": "000000DA-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "AccessControlLevel"],
+  "OptionalCharacteristics": [
+    "PasswordSetting"]
+  },
+"AccessoryInformation": {
+  "UUID": "0000003E-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Identify",
+    "Manufacturer",
+    "Model",
+    "Name",
+    "SerialNumber",
+    "FirmwareRevision" ],
+  "OptionalCharacteristics": [
+    "AccessoryFlags",
+    "AppMatchingIdentifier",
+    "ConfiguredName",
+    "HardwareFinish",
+    "HardwareRevision",
+    "ProductData",
+    "SoftwareRevision"]
+},
+"AccessoryMetrics": {
+  "UUID": "00000270-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Active"]
+},
+"AccessoryRuntimeInformation": {
+    "UUID": "00000239-0000-1000-8000-0026BB765291",
+    "RequiredCharacteristics": [
+        "Ping"],
+    "OptionalCharacteristics": [
+        "ActivityInterval",
+        "HeartBeat",
+        "SleepInterval"]
+    },
+"AirPurifier": {
+  "UUID": "000000BB-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Active",
+    "CurrentAirPurifierState",
+    "TargetAirPurifierState"],
+  "OptionalCharacteristics": [
+    "LockPhysicalControls",
+    "Name",
+    "RotationSpeed",
+    "SwingMode" ]
+    },
+"AirQualitySensor": {
+  "UUID": "0000008D-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "AirQuality"],
+  "OptionalCharacteristics": [
+    "NitrogenDioxideDensity",
+    "OzoneDensity",
+    "PM10Density",
+    "PM2_5Density",
+    "SulphurDioxideDensity",
+    "VOCDensity",
+    "Name",
+    "StatusActive",
+    "StatusFault",
+    "StatusLowBattery",
+    "StatusTampered" ]
+  },
+"AssetUpdate": {
+  "UUID": "00000267-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "AssetUpdateReadiness",
+    "SupportedAssetTypes"]
+  },
+"Assistant": {
+  "UUID": "0000026A-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Active",
+    "Identifier",
+    "Name"]
+  },
+"AudioStreamManagement": {
+  "UUID": "00000127-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "SupportedAudioStreamConfiguration",
+    "SelectedAudioStreamConfiguration"]
+  },
+ "Battery": {
+  "UUID": "00000096-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "StatusLowBattery"],
+  "OptionalCharacteristics": [
+    "BatteryLevel",
+    "ChargingState",
+    "Name"]
+  },
+  "BridgeConfiguration": {
+  "UUID":"000000A1-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "ConfigureBridgedAccessoryStatus",
+    "DiscoverBridgedAccessories",
+    "DiscoveredBridgedAccessories",
+    "ConfigureBridgedAccessory"],
+  "OptionalCharacteristics": [
+    "Name"]
+  },
+  "BridgingState": {
+  "UUID":"00000062-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Reachable",
+    "LinkQuality",
+    "AccessoryIdentifier",
+    "Category"],
+  "OptionalCharacteristics": [
+    "Name"]
+  },
+  "CameraControl" : {
+  "UUID":"00000111-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "On"],
+  "OptionalCharacteristics": [
+    "CurrentHorizontalTiltAngle",
+    "CurrentVerticalTiltAngle",
+    "TargetHorizontalTiltAngle",
+    "TargetVerticalTiltAngle",
+    "NightVision",
+    "OpticalZoom",
+    "DigitalZoom",
+    "ImageRotation",
+    "ImageMirroring",
+    "Name"]
+  },
+"CameraOperatingMode": {
+  "UUID":"0000021A-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "EventSnapshotsActive",
+    "HomeKitCameraActive"],
+  "OptionalCharacteristics": [
+    "CameraOperatingModeIndicator",
+    "ManuallyDisabled",
+    "NightVision",
+    "PeriodicSnapshotsActive",
+    "ThirdPartyCameraActive",
+    "DiagonalFieldOfView"]
+  },
+"CameraRecordingManagement": {
+  "UUID":"00000204-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Active",
+    "SupportedCameraRecordingConfiguration",
+    "SupportedVideoRecordingConfiguration",
+    "SupportedAudioRecordingConfiguration",
+    "SelectedCameraRecordingConfiguration"],
+  "OptionalCharacteristics": [
+    "RecordingAudioActive"]
+  },
+"CameraRTPStreamManagement": {
+  "UUID":"00000110-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "SelectedRTPStreamConfiguration",
+    "SetupEndpoints",
+    "StreamingStatus",
+    "SupportedAudioStreamConfiguration",
+    "SupportedRTPConfiguration",
+    "SupportedVideoStreamConfiguration"],
+  "OptionalCharacteristics": [
+    "Active"]
+  },
+"CarbonDioxideSensor": {
+  "UUID":"00000097-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CarbonDioxideDetected"],
+  "OptionalCharacteristics": [
+    "CarbonDioxideLevel",
+    "CarbonDioxidePeakLevel",
+    "Name",
+    "StatusActive",
+    "StatusFault",
+    "StatusLowBattery",
+    "StatusTampered"]
+  },
+"CarbonMonoxideSensor": {
+  "UUID":"0000007F-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CarbonMonoxideDetected"],
+  "OptionalCharacteristics": [
+    "CarbonMonoxideLevel",
+    "CarbonMonoxidePeakLevel",
+    "Name",
+    "StatusActive",
+    "StatusFault",
+    "StatusLowBattery",
+    "StatusTampered"]
+  },
+"CloudRelay": {
+  "UUID":"0000005A-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "RelayControlPoint",
+    "RelayState",
+    "RelayEnabled"]
+  },
+"ContactSensor": {
+  "UUID":"00000080-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "ContactSensorState"],
+  "OptionalCharacteristics": [
+    "Name",
+    "StatusActive",
+    "StatusFault",
+    "StatusLowBattery",
+    "StatusTampered"]
+  },
+"DataStreamTransportManagement": {
+  "UUID":"00000129-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "SetupDataStreamTransport",
+    "SupportedDataStreamTransportConfiguration",
+    "Version"]
+  },
+"Diagnostics": {
+  "UUID":"00000237-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "SupportedDiagnosticsSnapshot"],
+  "OptionalCharacteristics": [
+    "SelectedDiagnosticsModes",
+    "SupportedDiagnosticsModes"]
+  },
+"Door": {
+  "UUID":"00000081-0000-1000-8000-0026BB765291",
+"RequiredCharacteristics": [
+    "CurrentPosition",
+    "PositionState",
+    "TargetPosition"],
+  "OptionalCharacteristics": [
+    "Name",
+    "ObstructionDetected",
+    "HoldPosition"]
+  },
+"Doorbell": {
+  "UUID":"00000121-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "ProgrammableSwitchEvent"],
+  "OptionalCharacteristics": [
+    "Brightness",
+    "Mute",
+    "Name",
+    "OperatingStateResponse",
+    "Volume"]
+  },
+"Fan":  {
+  "UUID":"00000040-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "On"],
+  "OptionalCharacteristics": [
+    "Name",
+    "RotationDirection",
+    "RotationSpeed"]
+  },
+"Fanv2": {
+  "UUID":"000000B7-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Active"],
+  "OptionalCharacteristics": [
+    "CurrentFanState",
+    "TargetFanState",
+    "LockPhysicalControls",
+    "Name",
+    "RotationDirection",
+    "RotationSpeed",
+    "SwingMode"]
+  },
+"Faucet": {
+  "UUID":"000000D7-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Active"],
+  "OptionalCharacteristics": [
+    "Name",
+    "StatusFault"]
+  },
+"FilterMaintenance": {
+  "UUID":"000000BA-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "FilterChangeIndication"],
+  "OptionalCharacteristics": [
+    "FilterLifeLevel",
+    "ResetFilterIndication",
+    "Name"]
+  },
+"GarageDoorOpener": {
+  "UUID":"00000041-0000-1000-8000-0026BB765291",
+"RequiredCharacteristics": [
+    "CurrentDoorState",
+    "TargetDoorState",
+    "ObstructionDetected"],
+  "OptionalCharacteristics": [
+    "LockCurrentState",
+    "LockTargetState",
+    "Name"]
+  },
+"HeaterCooler": {
+  "UUID":"000000BC-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Active",
+    "CurrentHeaterCoolerState",
+    "TargetHeaterCoolerState",
+    "CurrentTemperature"],
+  "OptionalCharacteristics": [
+    "LockPhysicalControls",
+    "Name",
+    "RotationSpeed",
+    "SwingMode",
+    "CoolingThresholdTemperature",
+    "HeatingThresholdTemperature",
+    "TemperatureDisplayUnits"]
+  },
+"HumidifierDehumidifier": {
+  "UUID":"000000BD-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Active",
+    "CurrentHumidifierDehumidifierState",
+    "TargetHumidifierDehumidifierState",
+    "CurrentRelativeHumidity"],
+  "OptionalCharacteristics": [
+    "LockPhysicalControls",
+    "Name",
+    "RelativeHumidityDehumidifierThreshold",
+    "RelativeHumidityHumidifierThreshold",
+    "RotationSpeed",
+    "SwingMode",
+    "WaterLevel"]
+  },
+"HumiditySensor":  {
+  "UUID":"00000082-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CurrentRelativeHumidity"],
+  "OptionalCharacteristics": [
+    "Name",
+    "StatusActive",
+    "StatusFault",
+    "StatusLowBattery",
+    "StatusTampered"]
+  },
+"InputSource":  {
+  "UUID":"000000D9-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "ConfiguredName",
+    "InputSourceType",
+    "IsConfigured",
+    "Name",
+    "CurrentVisibilityState"],
+  "OptionalCharacteristics": [
+    "Identifier",
+    "InputDeviceType",
+    "TargetVisibilityState"]
+  },
+"IrrigationSystem": {
+  "UUID":"000000CF-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Active",
+    "ProgramMode",
+    "InUse"],
+  "OptionalCharacteristics": [
+    "RemainingDuration",
+    "Name",
+    "StatusFault"]
+  },
+"LeakSensor": {
+  "UUID":"00000083-0000-1000-8000-0026BB765291",
+"RequiredCharacteristics": [
+    "LeakDetected"],
+  "OptionalCharacteristics": [
+    "Name",
+    "StatusActive",
+    "StatusFault",
+    "StatusLowBattery",
+    "StatusTampered"]
+  },
+"Lightbulb":  {
+  "UUID":"00000043-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "On"],
+  "OptionalCharacteristics": [
+    "Brightness",
+    "CharacteristicValueActiveTransitionCount",
+    "CharacteristicValueTransitionControl",
+    "ColorTemperature",
+    "Hue",
+    "Name",
+    "Saturation",
+    "SupportedCharacteristicValueTransitionConfiguration"]
+  },
+"LightSensor":  {
+  "UUID":"00000084-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CurrentAmbientLightLevel"],
+  "OptionalCharacteristics": [
+    "Name",
+    "StatusActive",
+    "StatusFault",
+    "StatusLowBattery",
+    "StatusTampered"]
+  },
+"LockManagement": {
+  "UUID":"00000044-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "LockControlPoint",
+    "Version"],
+  "OptionalCharacteristics": [
+    "AdministratorOnlyAccess",
+    "AudioFeedback",
+    "CurrentDoorState",
+    "LockManagementAutoSecurityTimeout",
+    "LockLastKnownAction",
+    "Logs",
+    "MotionDetected"]
+  },
+"LockMechanism": {
+  "UUID":"00000045-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "LockCurrentState",
+    "LockTargetState"],
+  "OptionalCharacteristics": [
+    "Name"]
+  },
+"Microphone":  {
+  "UUID":"00000112-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Mute"],
+  "OptionalCharacteristics": [
+    "Volume"]
+  },
+"MotionSensor":  {
+  "UUID":"00000085-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "MotionDetected"],
+  "OptionalCharacteristics": [
+    "Name",
+    "StatusActive",
+    "StatusFault",
+    "StatusLowBattery",
+    "StatusTampered"]
+  },
+"NFCAccess":  {
+  "UUID":"00000266-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "ConfigurationState",
+    "NFCAccessControlPoint",
+    "NFCAccessSupportedConfiguration"]
+  },
+"OccupancySensor": {
+  "UUID":"00000086-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "OccupancyDetected"],
+  "OptionalCharacteristics": [
+    "Name",
+    "StatusActive",
+    "StatusFault",
+    "StatusLowBattery",
+    "StatusTampered"]
+  },
+"Outlet": {
+  "UUID":"00000047-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "On"],
+  "OptionalCharacteristics": [
+    "Name",
+    "OutletInUse"]
+  },
+"Pairing": {
+  "UUID":"00000055-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "ListPairings",
+    "PairSetup",
+    "PairVerify",
+    "PairingFeatures"]
+  },
+"PowerManagement":  {
+  "UUID":"00000221-0000-1000-8000-0026BB765291",
+"RequiredCharacteristics": [
+    "WakeConfiguration"]
+  },
+"ProtocolInformation": {
+  "UUID":"000000A2-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Version"]
+  },
+"SecuritySystem":  {
+  "UUID":"0000007E-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "SecuritySystemCurrentState",
+    "SecuritySystemTargetState"],
+  "OptionalCharacteristics": [
+    "Name",
+    "SecuritySystemAlarmType",
+    "StatusFault",
+    "StatusTampered"]
+  },
+"ServiceLabel":  {
+  "UUID":"000000CC-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "ServiceLabelNamespace"]
+  },
+"Siri": {
+  "UUID":"00000133-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "SiriInputType"],
+  "OptionalCharacteristics": [
+    "MultifunctionButton",
+    "SiriEnable",
+    "SiriEngineVersion",
+    "SiriLightOnUse",
+    "SiriListening",
+    "SiriTouchToUse"]
+  },
+"SiriEndpoint": {
+  "UUID":"00000253-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "SiriEndpointSessionStatus",
+    "Version"],
+  "OptionalCharacteristics": [
+    "ActiveIdentifier",
+    "ManuallyDisabled"]
+  },
+"Slats":  {
+  "UUID":"000000B9-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CurrentSlatState",
+    "SlatType"],
+  "OptionalCharacteristics": [
+    "Name",
+    "SwingMode",
+    "CurrentTiltAngle",
+    "TargetTiltAngle"]
+  },
+"SmartSpeaker": {
+  "UUID":"00000228-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CurrentMediaState",
+    "TargetMediaState"],
+  "OptionalCharacteristics": [
+    "AirPlayEnable",
+    "ConfiguredName",
+    "Mute",
+    "Name",
+    "Volume"]
+  },
+"SmokeSensor": {
+  "UUID":"00000087-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "SmokeDetected"],
+  "OptionalCharacteristics": [
+    "Name",
+    "StatusActive",
+    "StatusFault",
+    "StatusLowBattery",
+    "StatusTampered"]
+  },
+"Speaker":  {
+  "UUID":"00000113-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Mute"],
+  "OptionalCharacteristics": [
+    "Active",
+    "Volume"]
+  },
+"StatefulProgrammableSwitch": {
+  "UUID":"00000088-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "ProgrammableSwitchEvent",
+    "ProgrammableSwitchOutputState"],
+  "OptionalCharacteristics": [
+    "Name"]
+  },
+"StatelessProgrammableSwitch":  {
+  "UUID":"00000089-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "ProgrammableSwitchEvent"],
+  "OptionalCharacteristics": [
+    "Name",
+    "ServiceLabelIndex"]
+  },
+"Switch":  {
+  "UUID":"00000049-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "On"],
+  "OptionalCharacteristics": [
+    "Name"]
+  },
+"TargetControl":  {
+  "UUID":"00000125-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Active",
+    "ActiveIdentifier",
+    "ButtonEvent"],
+  "OptionalCharacteristics": [
+    "Name"]
+  },
+"TargetControlManagement": {
+  "UUID":"00000122-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "TargetControlSupportedConfiguration",
+    "TargetControlList"]
+  },
+"Television":  {
+  "UUID":"000000D8-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Active",
+    "ActiveIdentifier",
+    "ConfiguredName",
+    "RemoteKey",
+    "SleepDiscoveryMode"],
+  "OptionalCharacteristics": [
+    "Brightness",
+    "ClosedCaptions",
+    "DisplayOrder",
+    "CurrentMediaState",
+    "TargetMediaState",
+    "Name",
+    "PictureMode",
+    "PowerModeSelection"]
+  },
+"TelevisionSpeaker": {
+  "UUID":"00000113-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Mute"],
+  "OptionalCharacteristics": [
+    "Active",
+    "Volume",
+    "VolumeControlType",
+    "VolumeSelector"]
+  },
+"TemperatureSensor":  {
+  "UUID":"0000008A-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CurrentTemperature"],
+  "OptionalCharacteristics": [
+    "Name",
+    "StatusActive",
+    "StatusFault",
+    "StatusLowBattery",
+    "StatusTampered"]
+  },
+"Thermostat": {
+  "UUID":"0000004A-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CurrentHeatingCoolingState",
+    "TargetHeatingCoolingState",
+    "CurrentTemperature",
+    "TargetTemperature",
+    "TemperatureDisplayUnits"],
+  "OptionalCharacteristics": [
+    "Name",
+    "CurrentRelativeHumidity",
+    "TargetRelativeHumidity",
+    "CoolingThresholdTemperature",
+    "HeatingThresholdTemperature"]
+  },
+"ThreadTransport" : {
+  "UUID":"00000701-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CurrentTransport",
+    "ThreadControlPoint",
+    "ThreadNodeCapabilities",
+    "ThreadStatus"],
+  "OptionalCharacteristics": [
+    "CCAEnergyDetectThreshold",
+    "CCASignalDetectThreshold",
+    "EventRetransmissionMaximum",
+    "EventTransmissionCounters",
+    "MACRetransmissionMaximum",
+    "MACTransmissionCounters",
+    "ReceiverSensitivity",
+    "ReceivedSignalStrengthIndication",
+    "SignalToNoiseRatio",
+    "ThreadOpenThreadVersion",
+    "TransmitPower",
+    "MaximumTransmitPower"]
+  },
+"TimeInformation": {
+  "UUID":"00000099-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CurrentTime",
+    "DayoftheWeek",
+    "TimeUpdate"],
+  "OptionalCharacteristics": [
+    "Name"]
+  },
+"TransferTransportManagement":  {
+  "UUID":"00000203-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "SupportedTransferTransportConfiguration",
+    "SetupTransferTransport"]
+  },
+"Tunnel": {
+  "UUID":"00000056-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "AccessoryIdentifier",
+    "TunnelConnectionTimeout",
+    "TunneledAccessoryAdvertising",
+    "TunneledAccessoryConnected",
+    "TunneledAccessoryStateNumber"]
+  },
+"Valve": {
+  "UUID":"000000D0-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "Active",
+    "InUse",
+    "ValveType"],
+  "OptionalCharacteristics": [
+    "IsConfigured",
+    "Name",
+    "RemainingDuration",
+    "ServiceLabelIndex",
+    "SetDuration",
+    "StatusFault"]
+  },
+"WiFiRouter":  {
+  "UUID":"0000020A-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "ConfiguredName",
+    "ManagedNetworkEnable",
+    "NetworkAccessViolationControl",
+    "NetworkClientProfileControl",
+    "NetworkClientStatusControl",
+    "RouterStatus",
+    "SupportedRouterConfiguration",
+    "WANConfigurationList",
+    "WANStatusList"]
+  },
+"WiFiSatellite":  {
+  "UUID":"0000020F-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "WiFiSatelliteStatus"]
+  },
+"WiFiTransport":  {
+  "UUID":"0000022A-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CurrentTransport",
+    "WiFiCapabilities"],
+  "OptionalCharacteristics": [
+    "WiFiConfigurationControl"]
+  },
+"Window": {
+  "UUID":"0000008B-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CurrentPosition",
+    "PositionState",
+    "TargetPosition"],
+  "OptionalCharacteristics": [
+    "Name",
+    "ObstructionDetected",
+    "HoldPosition"]
+  },
+"WindowCovering":  {
+  "UUID":"0000008C-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CurrentPosition",
+    "PositionState",
+    "TargetPosition"],
+  "OptionalCharacteristics": [
+    "CurrentHorizontalTiltAngle",
+    "TargetHorizontalTiltAngle",
+    "Name",
+    "ObstructionDetected",
+    "HoldPosition",
+    "CurrentVerticalTiltAngle",
+    "TargetVerticalTiltAngle"]
+  },
+"Weather": {
+  "UUID": "E863F001-079E-48FF-8F27-9C2605A29F52",
+  "RequiredCharacteristics": [
+    "CurrentTemperature",
+    "CurrentRelativeHumidity",
+    "AtmosphericPressure"],
+  "OptionalCharacteristics": [
+      "Name"]
+  },
+"Room": {
+  "UUID": "E863F002-079E-48FF-8F27-9C2605A29F52",
+  "RequiredCharacteristics": [
+    "EVE_Temperature",
+    "EVE_Humidity"],
+  "OptionalCharacteristics": [
+    "Name",
+    "EVE_AirParticalDensity",
+    "EveAirQuality"]
+    },
+"SoilHumidity": {
+  "UUID": "00000082-0000-1000-8000-0026BB765291",
+  "RequiredCharacteristics": [
+    "CurrentRelativeHumidity"],
+  "OptionalCharacteristics": [
+    "Name"]
+  },
+"AtmosphericPressureSensor": {
+  "UUID": "E863F00A-079E-48FF-8F27-9C2605A29F52",
+  "RequiredCharacteristics": [
+    "AtmosphericPressure"],
+  "OptionalCharacteristics": [
+     "Name",
+     "Elevation"]   
+   },
+"PowerMeter": {
+  "UUID": "00000001-0000-1777-8000-775D67EC4377",
+  "RequiredCharacteristics": [
+    "CurrentConsumption",
+    "TotalConsumption"],
+  "OptionalCharacteristics": [
+     "Name"]
+ },
+ "History": {
+  "UUID": "E863F007-079E-48FF-8F27-9C2605A29F52",
+  "RequiredCharacteristics": [
+    "S2R1",
+    "S2R2",
+    "S2W1",
+    "S2W2"],
+  "OptionalCharacteristics": [
+   "Name",
+   "ResetTotal",
+   "GetConfiguration",
+   "SetConfiguration",
+   "EVE_FirmwareUpdate"]
+  }
+}
+
