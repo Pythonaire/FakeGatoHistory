@@ -313,7 +313,7 @@ class FakeGatoHistory():
             if self.disableTimer == False:
                 self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
             else:
-                self._addEntry({'time': self.entry['time'], 'temp': self.entry['temp'], 'humidity': self.entry['humidity'], 'ppm': self.entry['voc']})
+                self._addEntry({'time': self.entry['time'], 'temp': self.entry['temp'], 'humidity': self.entry['humidity'], 'voc': self.entry['voc']})
         elif self.accessoryType == TYPE_ENERGY:
             if self.disableTimer == False:
                 self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
