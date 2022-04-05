@@ -819,10 +819,10 @@
  "History": {
   "UUID": "E863F007-079E-48FF-8F27-9C2605A29F52",
   "RequiredCharacteristics": [
-    "S2R1",
-    "S2R2",
-    "S2W1",
-    "S2W2"],
+    "HistoryStatus",
+    "HistoryEntries",
+    "HistoryRequest",
+    "SetTime"],
   "OptionalCharacteristics": [
    "Name",
    "ResetTotal",

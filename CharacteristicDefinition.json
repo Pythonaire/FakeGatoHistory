@@ -1,9 +1,8 @@
 {
-
 "AccessCodeControlPoint": {
   "UUID":"00000262-0000-1000-8000-0026BB765291",
   "Format": "tlv8",
-  "Permissions": ["pr", "pw"]
+  "Permissions": ["pr", "pw", "wr"]
   },
 "AccessCodeSupportedConfiguration": {
   "UUID":"00000261-0000-1000-8000-0026BB765291",
@@ -126,7 +125,7 @@
 "CameraOperatingModeIndicator": {
   "UUID":"0000021D-0000-1000-8000-0026BB765291",
   "Format": "bool",
-  "Permissions": ["pr","pw","ev"],
+  "Permissions": ["pr","pw","ev", "tw"],
   "validValues": [0, 1]
   },
 "CarbonDioxideDetected": {
@@ -204,7 +203,7 @@
 "CharacteristicValueTransitionControl": {
   "UUID":"00000143-0000-1000-8000-0026BB765291",
   "Format": "tlv8",
-  "Permissions": ["pr", "pw"]
+  "Permissions": ["pr", "pw", "wr"]
   },
 "ChargingState": {
   "UUID":"0000008F-0000-1000-8000-0026BB765291",
@@ -426,7 +425,7 @@
 "DataStreamHAPTransport": {
   "UUID":"00000138-0000-1000-8000-0026BB765291",
   "Format": "tlv8",
-  "Permissions": ["pr", "pw"]
+  "Permissions": ["pr", "pw", "wr"]
   },
 "DataStreamHAPTransportInterrupt": {
   "UUID":"00000139-0000-1000-8000-0026BB765291",
@@ -711,7 +710,7 @@
 "ManagedNetworkEnable": {
   "UUID":"00000215-0000-1000-8000-0026BB765291",
   "Format": "uint8",
-  "Permissions": ["pr", "pw", "ev"],
+  "Permissions": ["pr", "pw", "ev", "tw"],
   "minValue": 0,
   "maxValue": 1,
   "validValues": [0, 1]
@@ -765,22 +764,22 @@
 "NetworkAccessViolationControl": {
   "UUID":"0000021F-0000-1000-8000-0026BB765291",
   "Format": "tlv8",
-  "Permissions": ["pr", "pw", "ev"]
+  "Permissions": ["pr", "pw", "ev", "wr", "tw"]
   },
 "NetworkClientProfileControl": {
   "UUID":"0000020C-0000-1000-8000-0026BB765291",
   "Format": "tlv8",
-  "Permissions": ["pr", "pw", "ev"]
+  "Permissions": ["pr", "pw", "ev", "wr", "tw"]
   },
 "NetworkClientStatusControl": {
   "UUID":"0000020D-0000-1000-8000-0026BB765291",
   "Format": "tlv8",
-  "Permissions": ["pr", "pw"]
+  "Permissions": ["pr", "pw", "wr"]
   },
 "NFCAccessControlPoint": {
   "UUID":"00000264-0000-1000-8000-0026BB765291",
   "Format": "tlv8",
-  "Permissions": ["pr", "pw"]
+  "Permissions": ["pr", "pw", "wr"]
   },
 "NFCAccessSupportedConfiguration": {
   "UUID":"00000265-0000-1000-8000-0026BB765291",
@@ -790,7 +789,7 @@
 "NightVision": {
   "UUID":"0000011B-0000-1000-8000-0026BB765291",
   "Format": "bool",
-  "Permissions": ["pr", "pw", "ev"]
+  "Permissions": ["pr", "pw", "ev", "tw"]
   },
 "NitrogenDioxideDensity": {
   "UUID":"000000C4-0000-1000-8000-0026BB765291",
@@ -966,7 +965,7 @@
 "RecordingAudioActive": {
   "UUID":"00000226-0000-1000-8000-0026BB765291",
   "Format": "uint8",
-  "Permissions": ["pr", "pw", "ev"],
+  "Permissions": ["pr", "pw", "ev", "tw"],
   "validValues": [0, 1]
   },
 "RelativeHumidityDehumidifierThreshold": {
@@ -1147,7 +1146,7 @@
 "SetupDataStreamTransport": {
   "UUID":"00000131-0000-1000-8000-0026BB765291",
   "Format": "tlv8",
-  "Permissions": ["pr", "pw"]
+  "Permissions": ["pr", "pw", "wr"]
   },
 "SetupEndpoints": {
   "UUID":"00000118-0000-1000-8000-0026BB765291",
@@ -1157,7 +1156,7 @@
 "SetupTransferTransport": {
   "UUID":"00000201-0000-1000-8000-0026BB765291",
   "Format": "tlv8",
-  "Permissions": ["pr", "pw"]
+  "Permissions": ["pr", "pw", "wr"]
   },
 "SignalToNoiseRatio": {
   "UUID":"00000241-0000-1000-8000-0026BB765291",
@@ -1407,7 +1406,7 @@
 "TargetControlList": {
   "UUID":"00000124-0000-1000-8000-0026BB765291",
   "Format": "tlv8",
-  "Permissions": ["pr", "pw"]
+  "Permissions": ["pr", "pw", "wr"]
   },
 "TargetControlSupportedConfiguration": {
   "UUID":"00000123-0000-1000-8000-0026BB765291",
@@ -1697,7 +1696,7 @@
 "WiFiConfigurationControl": {
   "UUID":"0000022D-0000-1000-8000-0026BB765291",
   "Format": "tlv8",
-  "Permissions": ["pr", "pw", "ev"]
+  "Permissions": ["pr", "pw", "ev", "wr", "tw"]
   },
 "WiFiSatelliteStatus": {
   "UUID":"0000021E-0000-1000-8000-0026BB765291",
@@ -1707,22 +1706,22 @@
   "maxValue": 2,
   "validValues": [0, 1, 2]
   },
-"S2R1": {
+"HistoryStatus": {
   "UUID": "E863F116-079E-48FF-8F27-9C2605A29F52",
   "Format" :"data",
   "Permissions": ["pr","pw","ev", "hd"]
  },
-"S2R2": {
+"HistoryEntries": {
   "UUID": "E863F117-079E-48FF-8F27-9C2605A29F52",
   "Format" :"data",
   "Permissions": ["pr","pw","ev", "hd"]
  },
-"S2W1": {
+"HistoryRequest": {
   "UUID": "E863F11C-079E-48FF-8F27-9C2605A29F52",
   "Format" :"data",
   "Permissions": ["pw", "hd"]
  },
-"S2W2": {
+"SetTime": {
   "UUID": "E863F121-079E-48FF-8F27-9C2605A29F52",
   "Format" :"data",
   "Permissions": ["pw", "hd"]

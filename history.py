@@ -2,6 +2,7 @@
 import logging, os, time, math, re, base64, uuid
 from pyhap.accessory import Accessory
 from timer import FakeGatoTimer
+from datetime import datetime
 
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
@@ -14,16 +15,16 @@ services:
      "Name" 
     ],
    "RequiredCharacteristics": [
-   "S2R1",
-   "S2R2",
-   "S2W1",
-   "S2W2"
+   "HistoryStatus",
+   "HistoryEntries",
+   "HistoryRequest",
+   "SetTime"
    ],
    "UUID": "E863F007-079E-48FF-8F27-9C2605A29F52"
 
  characteristics:
 
-    "S2R1": {
+    "HistoryStatus": {
       "Format" :"data",
       "Permissions": [
          "pr",
@@ -33,7 +34,7 @@ services:
       ],
       "UUID": "E863F116-079E-48FF-8F27-9C2605A29F52"
    },
-   "S2R2": {
+   "HistoryEntries": {
       "Format" :"data",
       "Permissions": [
          "pr",
@@ -43,7 +44,7 @@ services:
       ],
       "UUID": "E863F117-079E-48FF-8F27-9C2605A29F52"
    },
-   "S2W1": {
+   "HistoryRequest": {
       "Format" :"data",
       "Permissions": [
 	    "pw",
@@ -51,7 +52,7 @@ services:
       ],
       "UUID": "E863F11C-079E-48FF-8F27-9C2605A29F52"
    },
-   "S2W2": {
+   "SetTime": {
       "Format" :"data",
       "Permissions": [
 	    "pw",
@@ -203,7 +204,7 @@ class FakeGatoHistory():
                         self.signatures.append({'signature': '0c01', 'length': 2, 'uuid': toLongFormUUID(self.uuid), 'factor': 1, 'entry': 'motion'})
                         sorted_signature.append('0c01')
 
-                # here we need just the sorted 'signature' and count, self.signature will needed by getCurrentS2R2
+                # here we need just the sorted 'signature' and count, self.signature will needed by getCurrentHistoryEntries
             sorted_signature.sort()
             sorted_string = (i + ' ' for i in sorted_signature)
             self.accessoryType116 =' 0' + str(len(sorted_signature)) + ' ' + sorted_string
@@ -226,12 +227,13 @@ class FakeGatoHistory():
 
     def registerEvents(self):
         logging.info('Registring Events {0}'.format(self.accessoryName))
-        self.service = self.accessory.add_preload_service('History', chars =['S2R1','S2R2','S2W1','S2W2'])
-        self.S2R2 = self.service.configure_char("S2R2")
-        self.S2W1 = self.service.get_characteristic('S2W1')
-        self.S2W2 = self.service.get_characteristic('S2W2')
-        self.S2W1.setter_callback = self.setCurrentS2W1
-        self.S2W2.setter_callback = self.setCurrentS2W2
+        self.service = self.accessory.add_preload_service('History', chars =['HistoryStatus','HistoryEntries','HistoryRequest','SetTime'])
+        self.HistoryStatus = self.service.configure_char("HistoryStatus")
+        self.HistoryEntries = self.service.configure_char("HistoryEntries")
+        self.HistoryRequest = self.service.get_characteristic('HistoryRequest')
+        self.SetTime = self.service.get_characteristic('SetTime')
+        self.HistoryRequest.setter_callback = self.setCurrentHistoryRequest
+        self.SetTime.setter_callback = self.setCurrentSetTime
 
     def calculateAverage(self, params): # callback
         backLog = params['backLog'] if 'backLog' in params else []
@@ -278,7 +280,7 @@ class FakeGatoHistory():
             else:
                 actualEntry['time'] = backLog[0]['time']
                 actualEntry['status'] = backLog[0]['status']
-            logging.info("**Fakegato-timer callback: {0}, immediate: {1}, entry: {2} ****".format(self.accessoryName, immediate, actualEntry)) 
+            #logging.info("**Fakegato-timer callback: {0}, immediate: {1}, entry: {2} ****".format(self.accessoryName, immediate, actualEntry)) 
             self._addEntry(actualEntry)
 
     def sendHistory(self, address):
@@ -370,14 +372,15 @@ class FakeGatoHistory():
             format(swap16(int(self.memorySize)),'04X'),
             format(swap32(int(self.firstEntry+1)),'08X')
             ))
-        self.service.configure_char("S2R1", value = hexToBase64(val))
+        self.HistoryStatus.set_value(hexToBase64(val))    
+        #self.service.configure_char("HistoryStatus", value = hexToBase64(val))
         logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
         logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
         logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
         logging.info("116 {0}: {1}".format(self.accessoryName, val))
 
 
-    def getCurrentS2R2(self):
+    def getCurrentHistoryEntries(self):
         #self.entry2address = lambda val: val % self.memorySize
         if (self.currentEntry <= self.lastEntry) and (self.transfer == True):
             self.memoryAddress = self.entry2address(self.currentEntry)
@@ -490,16 +493,19 @@ class FakeGatoHistory():
             self.transfer = False
             return hexToBase64('00')
 
-    def setCurrentS2W1(self, val):
-        logging.info("Data request {0}: {1}".format(self.accessoryName, base64ToHex(val)))
+    def setCurrentHistoryRequest(self, val):
         valHex = base64ToHex(val)
-        substring = valHex[4:12]
-        valInt = int(substring, base=16)
+        logging.info("Data request {0}: {1}".format(self.accessoryName, valHex))
+        valInt = int(valHex[4:12], base=16)
         address = swap32(valInt)
         hexAddress = '{:x}'.format(address)
         logging.info("Address requested {0}: {1}".format(self.accessoryName, hexAddress))
         self.sendHistory(address)
-        self.S2R2.set_value(self.getCurrentS2R2())
+        self.HistoryEntries.set_value(self.getCurrentHistoryEntries())
 
-    def setCurrentS2W2(self, val):
-        logging.info("Clock adjust {0}: {1}".format(self.accessoryName, base64ToHex(val)))
+    def setCurrentSetTime(self, val):
+        x = bytearray(base64.b64decode(val))
+        x.reverse()
+        date_time = datetime.fromtimestamp(EPOCH_OFFSET + int(x.hex(),16))
+        d = date_time.strftime("%d.%m.%Y, %H:%M:%S")
+        logging.info("Clock adjust {0}: {1} - {2}".format(self.accessoryName, base64ToHex(val), d))
