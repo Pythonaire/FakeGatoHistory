@@ -72,8 +72,7 @@
     "StatusActive",
     "StatusFault",
     "StatusLowBattery",
-    "StatusTampered",
-    "EveAirQuality" ]
+    "StatusTampered"]
   },
 "AssetUpdate": {
   "UUID": "00000267-0000-1000-8000-0026BB765291",
