@@ -783,15 +783,16 @@
   "OptionalCharacteristics": [
       "Name"]
   },
-"Room": {
+"EveRoom": {
   "UUID": "E863F002-079E-48FF-8F27-9C2605A29F52",
   "RequiredCharacteristics": [
-    "EVE_Temperature",
-    "EVE_Humidity"],
+    "Temperature",
+    "Humidity"],
   "OptionalCharacteristics": [
     "Name",
-    "EVE_AirParticalDensity",
-    "EveAirQuality"]
+    "AirQuality",
+    "EveAirQuality",
+    "EveAirParticalDensity"]
     },
 "SoilHumidity": {
   "UUID": "00000082-0000-1000-8000-0026BB765291",
@@ -828,7 +829,7 @@
    "ResetTotal",
    "GetConfiguration",
    "SetConfiguration",
-   "EVE_FirmwareUpdate"]
+   "FirmwareUpdate"]
   }
 }
 

@@ -4,63 +4,7 @@ from pyhap.accessory import Accessory
 from timer import FakeGatoTimer
 from datetime import datetime
 
-
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
-
-''' add additional service and characteristics
-services:
-
-    "History": {
-    "OptionalCharacteristics": [
-     "Name" 
-    ],
-   "RequiredCharacteristics": [
-   "HistoryStatus",
-   "HistoryEntries",
-   "HistoryRequest",
-   "SetTime"
-   ],
-   "UUID": "E863F007-079E-48FF-8F27-9C2605A29F52"
-
- characteristics:
-
-    "HistoryStatus": {
-      "Format" :"data",
-      "Permissions": [
-         "pr",
-	    "pw",
-         "ev",
-         "hd"
-      ],
-      "UUID": "E863F116-079E-48FF-8F27-9C2605A29F52"
-   },
-   "HistoryEntries": {
-      "Format" :"data",
-      "Permissions": [
-         "pr",
-         "pw",
-         "ev",
-         "hd"
-      ],
-      "UUID": "E863F117-079E-48FF-8F27-9C2605A29F52"
-   },
-   "HistoryRequest": {
-      "Format" :"data",
-      "Permissions": [
-	    "pw",
-        "hd"
-      ],
-      "UUID": "E863F11C-079E-48FF-8F27-9C2605A29F52"
-   },
-   "SetTime": {
-      "Format" :"data",
-      "Permissions": [
-	    "pw",
-        "hd"
-      ],
-      "UUID": "E863F121-079E-48FF-8F27-9C2605A29F52"
-   }
-'''
 
 EPOCH_OFFSET = 978307200
 TYPE_ENERGY = 'energy'
@@ -228,7 +172,6 @@ class FakeGatoHistory():
     def registerEvents(self):
         logging.info('Registring Events {0}'.format(self.accessoryName))
         self.service = self.accessory.add_preload_service('History', chars =['HistoryStatus','HistoryEntries','HistoryRequest','SetTime'])
-        self.HistoryStatus = self.service.configure_char("HistoryStatus")
         self.HistoryEntries = self.service.configure_char("HistoryEntries")
         self.HistoryRequest = self.service.get_characteristic('HistoryRequest')
         self.SetTime = self.service.get_characteristic('SetTime')
@@ -244,7 +187,6 @@ class FakeGatoHistory():
 			    'num': {},
 			    'avrg': {}
 		        }
-            # ex: backLog: [{'time': 1609237191, 'power': 1000}, {'time': 1609237196, 'power': 2000}]
         for dict in backLog: #list
             for key, val in dict.items(): #dict
                 if key != 'time':
@@ -280,7 +222,6 @@ class FakeGatoHistory():
             else:
                 actualEntry['time'] = backLog[0]['time']
                 actualEntry['status'] = backLog[0]['status']
-            #logging.info("**Fakegato-timer callback: {0}, immediate: {1}, entry: {2} ****".format(self.accessoryName, immediate, actualEntry)) 
             self._addEntry(actualEntry)
 
     def sendHistory(self, address):
@@ -331,7 +272,6 @@ class FakeGatoHistory():
             self._addEntry(self.entry)
 
     def _addEntry(self, entry):
-        #self.entry2address = lambda e: e % self.memorySize
         if self.usedMemory < self.memorySize:
             self.usedMemory += 1
             self.firstEntry = 0
@@ -349,7 +289,6 @@ class FakeGatoHistory():
         if self.refTime == 0:
             self.refTime = entry['time'] - EPOCH_OFFSET
             self.history[self.lastEntry] = {'time': entry['time'],'setRefTime': 1}
-            #self.initialTime = entry['time']
             self.lastEntry += 1
             self.usedMemory += 1
             self.history.append(self.lastEntry)
@@ -371,9 +310,8 @@ class FakeGatoHistory():
             format(swap16(int(self.usedMemory)),'04X'),
             format(swap16(int(self.memorySize)),'04X'),
             format(swap32(int(self.firstEntry+1)),'08X')
-            ))
-        self.HistoryStatus.set_value(hexToBase64(val))    
-        #self.service.configure_char("HistoryStatus", value = hexToBase64(val))
+            ))   
+        self.service.configure_char("HistoryStatus", value = hexToBase64(val))
         logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
         logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
         logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
@@ -381,11 +319,9 @@ class FakeGatoHistory():
 
 
     def getCurrentHistoryEntries(self):
-        #self.entry2address = lambda val: val % self.memorySize
         if (self.currentEntry <= self.lastEntry) and (self.transfer == True):
             self.memoryAddress = self.entry2address(self.currentEntry)
             for x in self.history:
-            #for x in range(10): # 10 ?? -> max 10 values can send per action
                 if self.history[self.memoryAddress].get('setRefTime') == 1 or self.setTime == True or self.currentEntry == self.firstEntry +1:
                     self.dataStream  += (",15{0} 0100 0000 81{1}0000 0000 00 0000".format(
                         format(int(swap32(self.currentEntry)), '08X'), 

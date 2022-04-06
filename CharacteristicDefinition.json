@@ -1821,6 +1821,24 @@
   "minValue": 0,
   "minStep": 1
 },
+"VoltAmpere": {
+  "UUID": "E863F110-079E-48FF-8F27-9C2605A29F52",
+  "Format": "uint32",
+  "Permissions": ["pr","ev"],
+  "unit": "VA",
+  "maxValue": 100000,
+  "minValue": 0,
+  "minStep": 1
+},
+"kVAh": {
+  "UUID": "E863F127-079E-48FF-8F27-9C2605A29F52",
+  "Format": "uint32",
+  "Permissions": ["pr","ev"],
+  "unit": "kVAh",
+  "maxValue": 100000,
+  "minValue": 0,
+  "minStep": 1
+},
 "ProgramCommand": {
   "UUID": "E863F12C-079E-48FF-8F27-9C2605A29F52",
   "Format": "data",
@@ -1881,21 +1899,21 @@
   "Format": "tlv8",
   "Permissions": ["pr","pw","hd"]
   },
-"EVE_AirParticalDensity": {
+"EveAirParticalDensity": {
   "UUID": "E863F132-079E-48FF-8F27-9C2605A29F52",
-  "Format": "uint32",
+  "Format": "uint16",
   "Permissions": ["pr","ev"],
   "unit": "ppb",
-  "maxValue": 5000,
-  "minValue": 0,
-  "minStep": 1
+  "maxValue": 65535,
+  "minValue": 5,
+  "minStep": 5
   },
-"EVE_FirmwareUpdate": {
+"FirmwareUpdate": {
   "UUID": "E863F11E-079E-48FF-8F27-9C2605A29F52",
   "Format": "data",
   "Permissions": ["pr","pw","ev"]
   },
-"EVE_Temperature": {
+"Temperature": {
   "UUID": "E863F108-079E-48FF-8F27-9C2605A29F52",
   "Format": "float",
   "Permissions": ["pr","ev"],
@@ -1904,7 +1922,7 @@
   "maxValue": 100,
   "minStep": 0.1
   },
-"EVE_Humidity": {
+"Humidity": {
   "UUID": "E863F122-079E-48FF-8F27-9C2605A29F52",
   "Format": "float",
   "Permissions": ["pr","ev"],
@@ -1913,7 +1931,7 @@
   "maxValue": 100,
   "minStep": 1
     },
-"EVE_Status": {
+"Status": {
   "UUID": "E863F122-079E-48FF-8F27-9C2605A29F52",
   "Format": "data",
   "Permissions": ["pr","pw","ev"]

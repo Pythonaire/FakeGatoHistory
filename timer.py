@@ -64,7 +64,7 @@ class FakeGatoTimer():
         self.running = False
         self.intervalID = None
 
-    @setInterval(600) # javascript setInverval = milliseconds, python = seconds, 600 = self.minutes*60
+    @setInterval(600)
     def executeCallbacks(self):
         logging.info("**Fakegato-timer: executeCallbacks**")
         if len(self.subscribedServices) != 0:
@@ -91,7 +91,6 @@ class FakeGatoTimer():
     def addData(self, params):
         data = params['entry']
         service = params['service']
-        #immediateCallback = (lambda:False, lambda:params['immediateCallback'])['immediateCallback' in params]()
         immediateCallback = params['immediateCallback'] if 'immediateCallback' in params else False
         if immediateCallback == True: # door or motion -> replace
             if len(self.getSubscriber(service)['backLog']) == 0:
