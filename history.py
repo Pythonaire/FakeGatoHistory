@@ -73,7 +73,7 @@ class FakeGatoHistory():
         self.disableRepeatLastData = False
 
         if self.disableTimer == False:
-            self.globalFakeGatoTimer = FakeGatoTimer(self.minutes)
+            self.globalFakeGatoTimer = FakeGatoTimer(self.minutes,  self.accessoryName)
 
         if self.accessoryType == TYPE_WEATHER:
             self.accessoryType116 = "03 0102 0202 0302"

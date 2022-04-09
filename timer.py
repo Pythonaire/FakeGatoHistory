@@ -15,11 +15,12 @@ def setInterval(interval):
         return decorator
 
 class FakeGatoTimer():
-    def __init__(self, minutes, *args, **kwargs):
+    def __init__(self, minutes, accessoryName, *args, **kwargs):
         self.minutes = minutes
         self.subscribedServices = []
         self.running = False
         self.intervalID = None
+        self.accessoryName = accessoryName
         
     def subscribe(self, service, callback):
         logging.info("** Fakegato-timer Subscription : {0}".format(service.accessoryName))
@@ -52,7 +53,7 @@ class FakeGatoTimer():
             self.stop()
 
     def start(self):
-        logging.info("**Start Global Fakegato-Timer - {0} min**".format(self.minutes))
+        logging.info("**Start Fakegato-Timer {0} for {1} min  **".format(self.accessoryName, self.minutes))
         if self.running == True: # = True
             self.stop()
         self.running = True
