@@ -96,29 +96,9 @@
  "Battery": {
   "UUID": "00000096-0000-1000-8000-0026BB765291",
   "RequiredCharacteristics": [
-    "StatusLowBattery"],
-  "OptionalCharacteristics": [
     "BatteryLevel",
     "ChargingState",
-    "Name"]
-  },
-  "BridgeConfiguration": {
-  "UUID":"000000A1-0000-1000-8000-0026BB765291",
-  "RequiredCharacteristics": [
-    "ConfigureBridgedAccessoryStatus",
-    "DiscoverBridgedAccessories",
-    "DiscoveredBridgedAccessories",
-    "ConfigureBridgedAccessory"],
-  "OptionalCharacteristics": [
-    "Name"]
-  },
-  "BridgingState": {
-  "UUID":"00000062-0000-1000-8000-0026BB765291",
-  "RequiredCharacteristics": [
-    "Reachable",
-    "LinkQuality",
-    "AccessoryIdentifier",
-    "Category"],
+    "StatusLowBattery"],
   "OptionalCharacteristics": [
     "Name"]
   },
@@ -469,15 +449,15 @@
 "Outlet": {
   "UUID":"00000047-0000-1000-8000-0026BB765291",
   "RequiredCharacteristics": [
-    "On"],
+    "On",
+    "OutletInUse"],
   "OptionalCharacteristics": [
-    "Name",
-    "OutletInUse"]
+    "Name" ]
   },
 "Pairing": {
   "UUID":"00000055-0000-1000-8000-0026BB765291",
   "RequiredCharacteristics": [
-    "ListPairings",
+    "PairingPairings",
     "PairSetup",
     "PairVerify",
     "PairingFeatures"]
@@ -825,11 +805,18 @@
     "HistoryRequest",
     "SetTime"],
   "OptionalCharacteristics": [
-   "Name",
-   "ResetTotal",
-   "GetConfiguration",
-   "SetConfiguration",
-   "FirmwareUpdate"]
+   "Name"]
+  },
+  "EveDegree": {
+    "UUID":"E863F00A-079E-48FF-8F27-9C2605A29F52",
+    "RequiredCharacteristics": [
+      "Humidity",
+      "AtmosphericPressure",
+      "Temperature",
+      "EveAirQuality"],
+      "OptionalCharacteristics": [
+        "EveAirParticalDensity",
+        "Elevation"]
   }
 }
 

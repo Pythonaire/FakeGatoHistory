@@ -173,8 +173,10 @@ class FakeGatoHistory():
         logging.info('Registring Events {0}'.format(self.accessoryName))
         self.service = self.accessory.add_preload_service('History', chars =['HistoryStatus','HistoryEntries','HistoryRequest','SetTime'])
         self.HistoryEntries = self.service.configure_char("HistoryEntries")
-        self.HistoryRequest = self.service.get_characteristic('HistoryRequest')
-        self.SetTime = self.service.get_characteristic('SetTime')
+        self.HistoryRequest = self.service.configure_char('HistoryRequest')
+        self.HistoryStatus = self.service.configure_char("HistoryStatus")
+        self.SetTime = self.service.configure_char('SetTime')
+        self.HistoryEntries.getter_callback = self.getCurrentHistoryEntries
         self.HistoryRequest.setter_callback = self.setCurrentHistoryRequest
         self.SetTime.setter_callback = self.setCurrentSetTime
 
@@ -311,11 +313,12 @@ class FakeGatoHistory():
             format(swap16(int(self.memorySize)),'04X'),
             format(swap32(int(self.firstEntry+1)),'08X')
             ))   
-        self.service.configure_char("HistoryStatus", value = hexToBase64(val))
+        #self.service.configure_char("HistoryStatus", value = hexToBase64(val))
         logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
         logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
         logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
         logging.info("116 {0}: {1}".format(self.accessoryName, val))
+        self.HistoryStatus.set_value(hexToBase64(val))
 
 
     def getCurrentHistoryEntries(self):
@@ -415,12 +418,10 @@ class FakeGatoHistory():
                         results = dataStream + ' ' + format(bitmask, '02X' ) + ' ' + a
                         self.dataStream += (' ' + '{}'.format(len(re.sub(r"[^0-9A-F]", '', results, flags = re.I))/2+1) + ' ' + results + ',')
                         break
-
                 self.currentEntry += 1
                 self.memoryAddress = self.entry2address(self.currentEntry)
                 if (self.currentEntry > self.lastEntry):
                     break
-
             logging.info("Data {0}: {1}".format(self.accessoryName, self.dataStream))
             sendStream= self.dataStream
             self.dataStream =''
@@ -437,7 +438,7 @@ class FakeGatoHistory():
         hexAddress = '{:x}'.format(address)
         logging.info("Address requested {0}: {1}".format(self.accessoryName, hexAddress))
         self.sendHistory(address)
-        self.HistoryEntries.set_value(self.getCurrentHistoryEntries())
+        #self.HistoryEntries.set_value(self.getCurrentHistoryEntries())
 
     def setCurrentSetTime(self, val):
         x = bytearray(base64.b64decode(val))
@@ -445,3 +446,4 @@ class FakeGatoHistory():
         date_time = datetime.fromtimestamp(EPOCH_OFFSET + int(x.hex(),16))
         d = date_time.strftime("%d.%m.%Y, %H:%M:%S")
         logging.info("Clock adjust {0}: {1} - {2}".format(self.accessoryName, base64ToHex(val), d))
+        
