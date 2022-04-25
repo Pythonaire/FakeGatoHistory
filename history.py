@@ -71,6 +71,27 @@ class FakeGatoHistory():
         self.minutes = 10
         self.disableTimer = False
         self.disableRepeatLastData = False
+        self.firstEntry = 0
+        self.lastEntry = 0
+        self.history = [self.accessoryName]
+        self.usedMemory = 0
+        self.currentEntry = 1
+        self.transfer = False
+        self.setTime = True
+        self.restarted = True
+        self.refTime = 0
+        self.memoryAddress = 0 
+        self.dataStream = ''
+
+        logging.info('Registring Events {0}'.format(self.accessoryName))
+        self.service = self.accessory.add_preload_service('History', chars =['HistoryStatus','HistoryEntries','HistoryRequest','SetTime'])
+        self.HistoryEntries = self.service.configure_char("HistoryEntries")
+        self.HistoryRequest = self.service.configure_char('HistoryRequest')
+        self.HistoryStatus = self.service.configure_char("HistoryStatus")
+        self.SetTime = self.service.configure_char('SetTime')
+        self.HistoryEntries.getter_callback = self.getCurrentHistoryEntries
+        self.HistoryRequest.setter_callback = self.setCurrentHistoryRequest
+        self.SetTime.setter_callback = self.setCurrentSetTime
 
         if self.disableTimer == False:
             self.globalFakeGatoTimer = FakeGatoTimer(self.minutes,  self.accessoryName)
@@ -156,29 +177,6 @@ class FakeGatoHistory():
             if self.disableTimer == False:
                 self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
 
-        self.firstEntry = 0
-        self.lastEntry = 0
-        self.history = [self.accessoryName]
-        self.usedMemory = 0
-        self.currentEntry = 1
-        self.transfer = False
-        self.setTime = True
-        self.restarted = True
-        self.refTime = 0
-        self.memoryAddress = 0 
-        self.dataStream = ''
-        self.registerEvents()
-
-    def registerEvents(self):
-        logging.info('Registring Events {0}'.format(self.accessoryName))
-        self.service = self.accessory.add_preload_service('History', chars =['HistoryStatus','HistoryEntries','HistoryRequest','SetTime'])
-        self.HistoryEntries = self.service.configure_char("HistoryEntries")
-        self.HistoryRequest = self.service.configure_char('HistoryRequest')
-        self.HistoryStatus = self.service.configure_char("HistoryStatus")
-        self.SetTime = self.service.configure_char('SetTime')
-        self.HistoryEntries.getter_callback = self.getCurrentHistoryEntries
-        self.HistoryRequest.setter_callback = self.setCurrentHistoryRequest
-        self.SetTime.setter_callback = self.setCurrentSetTime
 
     def calculateAverage(self, params): # callback
         backLog = params['backLog'] if 'backLog' in params else []
@@ -324,7 +322,8 @@ class FakeGatoHistory():
     def getCurrentHistoryEntries(self):
         if (self.currentEntry <= self.lastEntry) and (self.transfer == True):
             self.memoryAddress = self.entry2address(self.currentEntry)
-            for x in self.history:
+            #for x in self.history:
+            for x in range(10):
                 if self.history[self.memoryAddress].get('setRefTime') == 1 or self.setTime == True or self.currentEntry == self.firstEntry +1:
                     self.dataStream  += (",15{0} 0100 0000 81{1}0000 0000 00 0000".format(
                         format(int(swap32(self.currentEntry)), '08X'), 
