@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import logging, os, time, math, re, base64, uuid
-from pyhap.accessory import Accessory
+import logging, time, math, re, base64, uuid
+#from pyhap.accessory import Accessory
 from timer import FakeGatoTimer
 from datetime import datetime
 
@@ -172,7 +172,7 @@ class FakeGatoHistory():
                 # here we need just the sorted 'signature' and count, self.signature will needed by getCurrentHistoryEntries
             sorted_signature.sort()
             sorted_string = (i + ' ' for i in sorted_signature)
-            self.accessoryType116 =' 0' + str(len(sorted_signature)) + ' ' + sorted_string
+            self.accessoryType116 =' 0' + str(len(sorted_signature)) + ' ' + sorted_string  # type: ignore
             logging.info("Services: {0}:".format(self.accessoryType116))
             if self.disableTimer == False:
                 self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
@@ -239,7 +239,7 @@ class FakeGatoHistory():
             else:
                 self._addEntry({'time': self.entry['time'], 'status': self.entry['status']})
         elif self.accessoryType == TYPE_AQUA:
-            self._addEntry({ 'time': self.entry['time'], 'status': self.entry['status'], 'waterAmount': self.entry['waterAmount'] })
+            self._addEntry({ 'time': self.entry['time'], 'status': self.entry['status'], 'waterAmount': self.entry['waterAmount'], 'immediateCallback': True })
         elif self.accessoryType == TYPE_WEATHER:
             if self.disableTimer == False:
                 self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
@@ -311,12 +311,14 @@ class FakeGatoHistory():
             format(swap16(int(self.memorySize)),'04X'),
             format(swap32(int(self.firstEntry+1)),'08X')
             ))   
+        
+        self.HistoryStatus.set_value(hexToBase64(val))
         #self.service.configure_char("HistoryStatus", value = hexToBase64(val))
         logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
         logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
         logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
         logging.info("116 {0}: {1}".format(self.accessoryName, val))
-        self.HistoryStatus.set_value(hexToBase64(val))
+        
 
 
     def getCurrentHistoryEntries(self):
@@ -414,7 +416,7 @@ class FakeGatoHistory():
                         a = ''
                         for i in result:
                             a = a + i +' '
-                        results = dataStream + ' ' + format(bitmask, '02X' ) + ' ' + a
+                        results = dataStream + ' ' + format(bitmask, '02X' ) + ' ' + a  # type: ignore
                         self.dataStream += (' ' + '{}'.format(len(re.sub(r"[^0-9A-F]", '', results, flags = re.I))/2+1) + ' ' + results + ',')
                         break
                 self.currentEntry += 1
@@ -437,7 +439,7 @@ class FakeGatoHistory():
         hexAddress = '{:x}'.format(address)
         logging.info("Address requested {0}: {1}".format(self.accessoryName, hexAddress))
         self.sendHistory(address)
-        #self.HistoryEntries.set_value(self.getCurrentHistoryEntries())
+    #self.HistoryEntries.set_value(self.getCurrentHistoryEntries())
 
     def setCurrentSetTime(self, val):
         x = bytearray(base64.b64decode(val))
