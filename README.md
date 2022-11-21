@@ -4,13 +4,14 @@ Based on the fabulous work of <https://github.com/simont77/fakegato-history> to 
 
 ## Differences to the javascript implementation
 
-The original fakegato-history contains 'fakegato-storage.js' for holding long time history data in a separate file, in case of system crash and data not uploaded. 
-By default, the script stores 4032 history records in memory, before overwriting. You can increase the value count in the script. Eve history function needs values each 10 minutes to prevent holes in the graph and display the history data over 14 days. So 4032 x 10 minutes should be enough.
+The original fakegato-history have a variable mem cache for data records. I set that fixed to 4032 and interval of 10 minutes, before the counter is reset to 0. That gives 4032/6 = 672 hours values in the memory.
+To pretend meantime system failure and losing data "store data" can be set by additional 'True'.
+A file "YourHostBName_YourAccessory" will be created and data will be stored where before uploading.
 
-## Modify interval and count of records
-
-You can change the count of stored history records in the RAM by changing "self.memorySize = XXX" and the pull data to the homekit interval by "self.minutes = XX". 
-
+```
+self.History = FakeGatoHistory('xxxx', self, True)
+```
+To restart from the cratch, delete this file.
 
 ## How To (example Weather data)
 
