@@ -1,26 +1,12 @@
 #!/usr/bin/env python3
 import logging, threading
 
-def setInterval(interval):
-        def decorator(function):
-            def wrapper(*args, **kwargs):
-                stopped = threading.Event()
-                def loop(): # executed in another thread
-                    while not stopped.wait(interval): # until stopped
-                        function(*args, **kwargs)
-                t = threading.Thread(target=loop)
-                t.daemon = True # stop if the program exits
-                t.start()
-                return stopped
-            return wrapper
-        return decorator
 
 class FakeGatoTimer():
     def __init__(self, minutes, accessoryName, *args, **kwargs):
         self.minutes = minutes
         self.subscribedServices = []
         self.running = False
-        self.intervalID = None
         self.accessoryName = accessoryName
 
     def call_repeatedly(self, interval, func):
@@ -50,26 +36,12 @@ class FakeGatoTimer():
                 break
         return i
 
-    def _getSubscriberIndex(self, service):
-        return self.subscribedServices.index(service)
-
-    def getSubscribers(self):
-        return self.subscribedServices
-
-    def unsubscribe(self, service):
-        index = self._getSubscriberIndex(service)
-        self.subscribedServices.pop(index)
-        if (len(self.subscribedServices) == 0 and self.running):
-            self.stop()
-
     def stop(self):
         logging.info("**Stop Global Fakegato-Timer****")
         self.cancel_future_calls()
-        #self.intervalID.set() # stop the loop
         self.running = False
-        #self.intervalID = None
+        
 
-    #@setInterval(600)
     def executeCallbacks(self):
         logging.info("**Fakegato-timer: executeCallbacks**")
         if len(self.subscribedServices) != 0:
@@ -108,7 +80,6 @@ class FakeGatoTimer():
             if self.running == False:
                 logging.info("**Start Fakegato-Timer {0} for {1} min  **".format(self.accessoryName, self.minutes))
                 self.running = True
-                #self.executeCallbacks()
                 self.cancel_future_calls = self.call_repeatedly(self.minutes*60, self.executeCallbacks)
 
 

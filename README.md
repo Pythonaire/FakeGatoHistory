@@ -4,14 +4,7 @@ Based on the fabulous work of <https://github.com/simont77/fakegato-history> to 
 
 ## Differences to the javascript implementation
 
-The original fakegato-history have a variable mem cache for data records. I set that fixed to 4032 and interval of 10 minutes, before the counter is reset to 0. That gives 4032/6 = 672 hours values in the memory.
-To pretend meantime system failure and losing data "store data" can be set by additional 'True'.
-A file "YourHostBName_YourAccessory" will be created and data will be stored where before uploading.
-
-```
-self.History = FakeGatoHistory('xxxx', self, True)
-```
-To restart from the cratch, delete this file.
+The original fakegato-history have a variable mem cache for data records. I set that fixed to 4032 and interval of 10 minutes (tp prevent memory holes). That gives 4032/6 = 672 hours values in the memory.
 
 ## How To (example Weather data)
 
