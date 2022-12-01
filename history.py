@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import logging, time, math, re, base64, uuid
+#from pyhap.accessory import Accessory
 from timer import FakeGatoTimer
 from datetime import datetime
 
@@ -31,12 +32,6 @@ def base64ToHex(x):
         return x
     else:
         return base64.b64decode(x).hex()
-
-def swap16(i):
-	return ((i & 0xFF) << 8) | ((i >> 8) & 0xFF)
-
-def swap32(i):
-    return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF)
 
 def isValid(value):
     try:
@@ -85,10 +80,10 @@ class FakeGatoHistory():
         self.HistoryEntries = self.service.configure_char("HistoryEntries")
         self.HistoryRequest = self.service.configure_char('HistoryRequest')
         self.HistoryStatus = self.service.configure_char("HistoryStatus")
-        self.CurrentTime = self.service.configure_char('SetTime')
+        self.SetTime = self.service.configure_char('SetTime')
         self.HistoryEntries.getter_callback = self.getCurrentHistoryEntries
         self.HistoryRequest.setter_callback = self.setCurrentHistoryRequest
-        self.CurrentTime.setter_callback = self.setCurrentSetTime
+        self.SetTime.setter_callback = self.setCurrentSetTime
 
         self.globalFakeGatoTimer = FakeGatoTimer(self.minutes,  self.accessoryName)
 
@@ -168,6 +163,19 @@ class FakeGatoHistory():
             logging.info("Services: {0}:".format(self.accessoryType116))
             self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
 
+
+    def swap16(self, i):
+        return ((i & 0xFF) << 8) | ((i >> 8) & 0xFF)
+
+    def swap32(self, i):
+        return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF)
+
+
+    def format32(self, value):
+        return format(self.swap32(int(value)), '08X')
+
+    def format16(self, value):
+        return format(self.swap16(int(value)), '04X')
 
     def calculateAverage(self, params): # callback
         backLog = params['backLog'] if 'backLog' in params else []
@@ -267,28 +275,27 @@ class FakeGatoHistory():
         self.history[self.entry2address(self.lastEntry)] = entry
         if self.usedMemory < self.memorySize:
             val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
-            format(swap32(int(entry['time'] - self.refTime - EPOCH_OFFSET)),'08X'),
-            format(swap32(int(self.refTime)),'08X'),
+            self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
+            self.format32(self.refTime),
             self.accessoryType116,
-            format(swap16(int(self.usedMemory + 1)),'04X'),
-            format(swap16(int(self.memorySize)),'04X'),
-            format(swap32(int(self.firstEntry)),'08X')
+            self.format16(self.usedMemory + 1),
+            self.format16(self.memorySize),
+            self.format32(self.firstEntry)
             ))
         else:
             val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
-            format(swap32(int(entry['time'] - self.refTime - EPOCH_OFFSET)),'08X'),
-            format(swap32(int(self.refTime)),'08X'),
+            self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
+            self.format32(self.refTime),
             self.accessoryType116,
-            format(swap16(int(self.usedMemory)),'04X'),
-            format(swap16(int(self.memorySize)),'04X'),
-            format(swap32(int(self.firstEntry+1)),'08X')
+            self.format16(self.usedMemory),
+            self.format16(self.memorySize),
+            self.format32(self.firstEntry+1)
             ))   
         
         self.HistoryStatus.set_value(hexToBase64(val))
-        #self.service.configure_char("HistoryStatus", value = hexToBase64(val))
-        logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
-        logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
-        logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
+        #logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
+        #logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
+        #logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
         logging.info("116 {0}: {1}".format(self.accessoryName, val))
         
 
@@ -296,90 +303,97 @@ class FakeGatoHistory():
     def getCurrentHistoryEntries(self):
         if (self.currentEntry <= self.lastEntry) and (self.transfer == True):
             self.memoryAddress = self.entry2address(self.currentEntry)
-            #for x in self.history:
-            for x in range(10):
+            for x in self.history:
+            #for x in range(10):
                 if self.history[self.memoryAddress].get('setRefTime') == 1 or self.setTime == True or self.currentEntry == self.firstEntry +1:
                     self.dataStream  += (",15{0} 0100 0000 81{1}0000 0000 00 0000".format(
-                        format(int(swap32(self.currentEntry)), '08X'), 
-                        format(int(swap32(self.refTime)), '08X'))
+                        self.format32(self.currentEntry), 
+                        self.format32(self.refTime))
                     )
                     self.setTime = False
                 else:
-                    logging.info("{0} Entry: {1}, Address: {2}".format(self.accessoryName, self.currentEntry, self.memoryAddress))
+                    #logging.info("{0} Entry: {1}, Address: {2}".format(self.accessoryName, self.currentEntry, self.memoryAddress))
                     if self.accessoryType == TYPE_WEATHER:
-                        self.dataStream += (",10 {0}{1}-{2}:{3} {4} {5}".format(format(swap32(int(self.currentEntry)), '08X'),
-                        format(swap32(int(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET)), '08X'),
+                        self.dataStream += (",10 {0}{1}-{2}:{3} {4} {5}".format(
+                        self.format32(self.currentEntry),
+                        self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
                         self.accessoryType117,
-                        format(swap16(int(self.history[self.memoryAddress].get('temp') * 100)), '04X'),
-			            format(swap16(int(self.history[self.memoryAddress].get('humidity') * 100)), '04X'),
-			            format(swap16(int(self.history[self.memoryAddress].get('pressure') * 10)), '04X'))
+                        self.format16(self.history[self.memoryAddress].get('temp') * 100),
+			            self.format16(self.history[self.memoryAddress].get('humidity') * 100),
+			            self.format16(self.history[self.memoryAddress].get('pressure') * 10))
                         )
                     elif self.accessoryType == TYPE_ENERGY:
                         self.dataStream += (",14 {0}{1}-{2}:0000 0000 {3} 0000 0000".format(
-                        format(swap32(int(self.currentEntry)), '08X'),
-                        format(swap32(int(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET)), '08X'),
+                        self.format32(self.currentEntry),
+                        self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
 			            self.accessoryType117,
-			            format(swap16(int(self.history[self.memoryAddress].get('power') * 10)), '04X'))
+			            self.format16(self.history[self.memoryAddress].get('power') * 10))
                         )
                     elif self.accessoryType == TYPE_ROOM:
-                        self.dataStream += (",13 {0}{1}{2}{3}{4}{5}0000 00".format(format(swap32(int(self.currentEntry)), '08X'),
-                        format(swap32(int(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET)), '08x'),
+                        self.dataStream += (",13 {0}{1}{2}{3}{4}{5}0000 00".format(
+                        self.format32(self.currentEntry),
+                        self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
 			            self.accessoryType117,
-			            format(swap16(int(self.history[self.memoryAddress].get('temp') * 100)), '04X'),
-			            format(swap16(int(self.history[self.memoryAddress].get('humidity') * 100)), '04X'),
-			            format(swap16(int(self.history[self.memoryAddress].get('ppm'))), '04X'))
+			            self.format16(self.history[self.memoryAddress].get('temp') * 100),
+			            self.format16(self.history[self.memoryAddress].get('humidity') * 100),
+			            self.format16(self.history[self.memoryAddress].get('ppm')))
                         )
                     elif self.accessoryType == TYPE_ROOM2:
-                        self.dataStream += (",15 {0}{1}{2}{3}{4}{5}0054 a80f01".format(format(swap32(int(self.currentEntry)), '08X'),
-                        format(swap32(int(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET)), '08x'),
+                        self.dataStream += (",15 {0}{1}{2}{3}{4}{5}0054 a80f01".format(
+                        self.format32(self.currentEntry),
+                        self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
                         self.accessoryType117,
-                        format(swap16(int(self.history[self.memoryAddress].get('temp') * 100)), '04X'),
-                        format(swap16(int(self.history[self.memoryAddress].get('humidity') * 100)), '04X'),
-                        format(swap16(int(self.history[self.memoryAddress].get('voc'))), '04X'))
+                        self.format16(self.history[self.memoryAddress].get('temp') * 100),
+                        self.format16(self.history[self.memoryAddress].get('humidity') * 100),
+                        self.format16(self.history[self.memoryAddress].get('voc')))
                         )
                     elif self.accessoryType == TYPE_DOOR or self.accessoryType == TYPE_MOTION or self.accessoryType == TYPE_SWITCH:
-                        self.dataStream += (",0b {0}{1}{2}{3}".format(format(swap32(int(self.currentEntry)), '08X'),
-                        format(swap32(int(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET)), '08X'),
+                        self.dataStream += (",0b {0}{1}{2}{3}".format(
+                        self.format32(self.currentEntry),
+                        self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
 			            self.accessoryType117,
 			            format(self.history[self.memoryAddress].get('status'), '02X'))
                         )
                     elif self.accessoryType == TYPE_AQUA:
                         if self.history[self.memoryAddress].get('status') == True:
-                            self.dataStream += (",0d {0}{1}{2}{3} 300c".format(format(swap32(int(self.currentEntry)), '08X'),
-                            format(swap32(int(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET)), '08X'),
+                            self.dataStream += (",0d {0}{1}{2}{3} 300c".format(
+                            self.format32(self.currentEntry),
+                            self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
 			                self.accessoryType117,
 			                format(self.history[self.memoryAddress].get('status'), '02X'))
                             )
                         else:
-                            self.dataStream += (",15 {0}{1}{2}{3}{4} 00000000 300c".format(format(swap32(int(self.currentEntry)), '08X'),
-			                format(swap32(int(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET)), '08X'),
+                            self.dataStream += (",15 {0}{1}{2}{3}{4} 00000000 300c".format(
+                            self.format32(self.currentEntry),
+			                self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
 			                self.accessoryType117bis,
 			                format(self.history[self.memoryAddress].get('status'), '02X'),
-			                format(swap32(int(self.history[self.memoryAddress].get('waterAmount'))), '08X'))
+			                self.format32(self.history[self.memoryAddress].get('waterAmount')))
                             )
                     elif self.accessoryType == TYPE_THERMO:
-                        self.dataStream += (",11 {0}{1}{2}{3}{4}{5} 0000".format(format(swap32(int(self.currentEntry)), '08X'),
-                        format(swap32(int(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET)), '08X'),
-                        self.accessoryType117,
-			            format(self.history[self.memoryAddress].get('currentTemp') * 100, '04X'),
-			            format(self.history[self.memoryAddress].get('setTemp') * 100, '04X'),
-			            format(self.history[self.memoryAddress].get('valvePosition'), '02X'))
+                        self.dataStream += (",11 {0}{1}{2}{3}{4}{5} 0000".format(
+                        self.format32(self.currentEntry),
+                            self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
+                            self.accessoryType117,
+			                self.format16(self.history[self.memoryAddress].get('currentTemp') * 100),
+			                self.format16(self.history[self.memoryAddress].get('setTemp') * 100),
+			                format(self.history[self.memoryAddress].get('valvePosition'), '02X'))
                         )
                     elif self.accessoryType == TYPE_CUSTOM:
                         result = []
                         bitmask = 0
-                        dataStream = ("{0}{1}".format(swap32(int(self.currentEntry)), '08X'),
-                        format(swap32(int(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET)), '08X'),
-                        )
+                        dataStream = ("{0}{1}".format(
+                        self.format32(self.currentEntry),
+                        self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET)))
                         for key, value in self.history[self.memoryAddress]:
                             if key != 'time':
                                 for i in range(len(self.signatures)):
                                     if self.signatures[i]['entry'] == key:
                                         if self.signatures[i]['length'] == 8:
-                                            result.append(format(swap32(int(value * self.signatures[i]['factor'])), '08X'))
+                                            result.append(self.format32(value * self.signatures[i]['factor']))
                                             break
                                         elif self.signatures[i]['length'] == 4:
-                                            result.append(format(swap16(int(value * self.signatures[i]['factor'])), '04X'))
+                                            result.append(self.format16(value * self.signatures[i]['factor']))
                                             break
                                         elif self.signatures[i]['length'] == 2:
                                             result.append(format(value * self.signatures[i]['factor'], '02X'))
@@ -407,10 +421,11 @@ class FakeGatoHistory():
         valHex = base64ToHex(val)
         logging.info("Data request {0}: {1}".format(self.accessoryName, valHex))
         valInt = int(valHex[4:12], base=16)
-        address = swap32(valInt)
-        hexAddress = '{:x}'.format(address)
-        logging.info("Address requested {0}: {1}".format(self.accessoryName, hexAddress))
+        address = self.swap32(valInt)
+        #hexAddress = '{:x}'.format(address)
+        #logging.info("Address requested {0}: {1}".format(self.accessoryName, hexAddress))
         self.sendHistory(address)
+    
 
     def setCurrentSetTime(self, val):
         x = bytearray(base64.b64decode(val))
