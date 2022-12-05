@@ -7,16 +7,6 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
 EPOCH_OFFSET = 978307200
-TYPE_ENERGY = 'energy'
-TYPE_ROOM = 'room'
-TYPE_ROOM2 = 'room2'
-TYPE_WEATHER = 'weather'
-TYPE_DOOR = 'door'
-TYPE_MOTION = 'motion'
-TYPE_SWITCH = 'switch'
-TYPE_THERMO = 'thermo'
-TYPE_AQUA = 'aqua',
-TYPE_CUSTOM = 'custom'
 
 def precisionRound(num, prec):
     factor = math.pow(10, prec)
@@ -56,23 +46,13 @@ def toShortFormUUID(uuid, base = '-0000-1000-8000-0026BB765291'):
 class FakeGatoHistory():
     def __init__(self,accessoryType, accessory, *args, **kwargs):
         super().__init__(*args, **kwargs) 
-        self.signatures = []
-        self.accessory = accessory
-        self.accessoryName = self.accessory.display_name
-        self.accessoryType = accessoryType
-        self.memorySize = 4032
+        self.accessory, self.accessoryName, self.accessoryType = accessory, accessory.display_name, accessoryType
+        self.memorySize, self.minutes, self.currentEntry = 4032, 10, 1
+        self.firstEntry = self.lastEntry = self.usedMemory = self.refTime = self.memoryAddress = 0
+        self.setTime = self.restarted = True
         self.entry2address = lambda e: e % self.memorySize
-        self.minutes = 10
-        self.firstEntry = 0
-        self.lastEntry = 0
         self.history = [self.accessoryName]
-        self.usedMemory = 0
-        self.currentEntry = 1
         self.transfer = False
-        self.setTime = True
-        self.restarted = True
-        self.refTime = 0
-        self.memoryAddress = 0 
         self.dataStream = ''
 
         logging.info('Registring Events {0}'.format(self.accessoryName))
@@ -87,42 +67,42 @@ class FakeGatoHistory():
 
         self.globalFakeGatoTimer = FakeGatoTimer(self.minutes,  self.accessoryName)
 
-        if self.accessoryType == TYPE_WEATHER:
+        if self.accessoryType == 'weather':
             self.accessoryType116 = "03 0102 0202 0302"
             self.accessoryType117 = "07"
             self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
-        elif self.accessoryType == TYPE_ENERGY:
+        elif self.accessoryType == 'energy':
             self.accessoryType116 = "04 0102 0202 0702 0f03"
             self.accessoryType117 = "1f"
             self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
-        elif self.accessoryType == TYPE_ROOM:
+        elif self.accessoryType == 'room':
             self.accessoryType116 = "04 0102 0202 0402 0f03"
             self.accessoryType117 = "0f"
             self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
-        elif self.accessoryType == TYPE_ROOM2:
+        elif self.accessoryType == 'room2':
             self.accessoryType116 = "07 0102 0202 2202 2901 2501 2302 2801"
             self.accessoryType117 = "7f"
             self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
-        elif self.accessoryType == TYPE_DOOR:
+        elif self.accessoryType == 'door':
             self.accessoryType116 = "01 0601"
             self.accessoryType117 = "01"
             self.globalFakeGatoTimer.subscribe(self, self.select_types)
-        elif self.accessoryType == TYPE_MOTION:
+        elif self.accessoryType == 'motion':
             self.accessoryType116 = "02 1301 1c01"
             self.accessoryType117 = "02"
             self.globalFakeGatoTimer.subscribe(self, self.select_types)
-        elif self.accessoryType == TYPE_SWITCH:
+        elif self.accessoryType == 'switch':
             self.accessoryType116 = "01 0e01"
             self.accessoryType117 = "01"
             self.globalFakeGatoTimer.subscribe(self, self.select_types)
-        elif self.accessoryType == TYPE_AQUA:
+        elif self.accessoryType == 'aqua':
             self.accessoryType116 = "03 1f01 2a08 2302"
             self.accessoryType117 = "05"
             self.accessoryType117bis = "07"
-        elif self.accessoryType == TYPE_THERMO:
+        elif self.accessoryType == 'thermo':
             self.accessoryType116 = "05 0102 1102 1001 1201 1d01"
             self.accessoryType117 = "1f"
-        elif self.accessoryType == TYPE_CUSTOM:
+        elif self.accessoryType == 'custom':
             self.signatures = []
             sorted_signature = []
             for x in self.service:
@@ -206,7 +186,7 @@ class FakeGatoHistory():
                     calc['avrg'][key] = previousAvrg[key]
         if len(calc['avrg']) > 1:
             self._addEntry(calc['avrg'])
-            timer.emptyData(self)
+            self.globalFakeGatoTimer.emptyData(self)
         return calc['avrg']
 
     def select_types(self, params): # callback
@@ -231,19 +211,19 @@ class FakeGatoHistory():
 
     def addEntry(self, entry):
         self.entry = entry
-        if self.accessoryType == TYPE_DOOR or self.accessoryType == TYPE_MOTION or self.accessoryType == TYPE_SWITCH:
+        if self.accessoryType == 'door' or self.accessoryType == 'motion' or self.accessoryType == 'switch':
             self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self, 'immediateCallback': True})
-        elif self.accessoryType == TYPE_AQUA:
+        elif self.accessoryType == 'aqua':
             self._addEntry({ 'time': self.entry['time'], 'status': self.entry['status'], 'waterAmount': self.entry['waterAmount'], 'immediateCallback': True })
-        elif self.accessoryType == TYPE_WEATHER:
+        elif self.accessoryType == 'weather':
             self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
-        elif self.accessoryType == TYPE_ROOM:
+        elif self.accessoryType == 'room':
             self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
-        elif self.accessoryType == TYPE_ROOM2:
+        elif self.accessoryType == 'room2':
             self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
-        elif self.accessoryType == TYPE_ENERGY:
+        elif self.accessoryType == 'energy':
             self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
-        elif self.accessoryType == TYPE_CUSTOM:
+        elif self.accessoryType == 'custom':
             if 'power' in entry or 'temp' in entry:
                 self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self })
             else:
@@ -313,7 +293,7 @@ class FakeGatoHistory():
                     self.setTime = False
                 else:
                     #logging.info("{0} Entry: {1}, Address: {2}".format(self.accessoryName, self.currentEntry, self.memoryAddress))
-                    if self.accessoryType == TYPE_WEATHER:
+                    if self.accessoryType == 'weather':
                         self.dataStream += (",10 {0}{1}-{2}:{3} {4} {5}".format(
                         self.format32(self.currentEntry),
                         self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
@@ -322,14 +302,14 @@ class FakeGatoHistory():
 			            self.format16(self.history[self.memoryAddress].get('humidity') * 100),
 			            self.format16(self.history[self.memoryAddress].get('pressure') * 10))
                         )
-                    elif self.accessoryType == TYPE_ENERGY:
+                    elif self.accessoryType == 'energy':
                         self.dataStream += (",14 {0}{1}-{2}:0000 0000 {3} 0000 0000".format(
                         self.format32(self.currentEntry),
                         self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
 			            self.accessoryType117,
 			            self.format16(self.history[self.memoryAddress].get('power') * 10))
                         )
-                    elif self.accessoryType == TYPE_ROOM:
+                    elif self.accessoryType == 'room':
                         self.dataStream += (",13 {0}{1}{2}{3}{4}{5}0000 00".format(
                         self.format32(self.currentEntry),
                         self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
@@ -338,7 +318,7 @@ class FakeGatoHistory():
 			            self.format16(self.history[self.memoryAddress].get('humidity') * 100),
 			            self.format16(self.history[self.memoryAddress].get('ppm')))
                         )
-                    elif self.accessoryType == TYPE_ROOM2:
+                    elif self.accessoryType == 'room2':
                         self.dataStream += (",15 {0}{1}{2}{3}{4}{5}0054 a80f01".format(
                         self.format32(self.currentEntry),
                         self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
@@ -347,14 +327,14 @@ class FakeGatoHistory():
                         self.format16(self.history[self.memoryAddress].get('humidity') * 100),
                         self.format16(self.history[self.memoryAddress].get('voc')))
                         )
-                    elif self.accessoryType == TYPE_DOOR or self.accessoryType == TYPE_MOTION or self.accessoryType == TYPE_SWITCH:
+                    elif self.accessoryType == 'door' or self.accessoryType == 'motion' or self.accessoryType == 'switch':
                         self.dataStream += (",0b {0}{1}{2}{3}".format(
                         self.format32(self.currentEntry),
                         self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
 			            self.accessoryType117,
 			            format(self.history[self.memoryAddress].get('status'), '02X'))
                         )
-                    elif self.accessoryType == TYPE_AQUA:
+                    elif self.accessoryType == 'aqua':
                         if self.history[self.memoryAddress].get('status') == True:
                             self.dataStream += (",0d {0}{1}{2}{3} 300c".format(
                             self.format32(self.currentEntry),
@@ -370,16 +350,16 @@ class FakeGatoHistory():
 			                format(self.history[self.memoryAddress].get('status'), '02X'),
 			                self.format32(self.history[self.memoryAddress].get('waterAmount')))
                             )
-                    elif self.accessoryType == TYPE_THERMO:
+                    elif self.accessoryType == 'thermo':
                         self.dataStream += (",11 {0}{1}{2}{3}{4}{5} 0000".format(
                         self.format32(self.currentEntry),
-                            self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
-                            self.accessoryType117,
-			                self.format16(self.history[self.memoryAddress].get('currentTemp') * 100),
-			                self.format16(self.history[self.memoryAddress].get('setTemp') * 100),
-			                format(self.history[self.memoryAddress].get('valvePosition'), '02X'))
+                        self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
+                        self.accessoryType117,
+			            self.format16(self.history[self.memoryAddress].get('currentTemp') * 100),
+			            self.format16(self.history[self.memoryAddress].get('setTemp') * 100),
+			            format(self.history[self.memoryAddress].get('valvePosition'), '02X'))
                         )
-                    elif self.accessoryType == TYPE_CUSTOM:
+                    elif self.accessoryType == 'custom':
                         result = []
                         bitmask = 0
                         dataStream = ("{0}{1}".format(
