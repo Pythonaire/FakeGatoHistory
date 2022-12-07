@@ -4,7 +4,7 @@ Based on the fabulous work of <https://github.com/simont77/fakegato-history> to 
 
 ## Differences to the javascript implementation
 
-The original fakegato-history have a variable mem cache for data records. I set that fixed to 4032 and interval of 10 minutes (tp prevent memory holes). That gives 4032/6 = 672 hours values in the memory.
+The original fakegato-history have a variable mem cache for data records. I set that fixed to 4032 and interval of 10 minutes (tp prevent memory holes). That gives 4032/6 = 672 hours values in the memory. You can store history values to prevent lost data by adding "True".
 
 ## How To (example Weather data)
 
@@ -31,6 +31,12 @@ Link the history to your device class (here the example 'weather'):
 
 ```#!/usr/bin/env python3
 self.History = FakeGatoHistory('weather', self)
+```
+
+If you like to store history data to prevent holes, in case of system crash,  you can add "True". That is the same functionality as the original fakegato-history offer.
+
+```#!/usr/bin/env python3
+self.History = FakeGatoHistory('weather', self, True)
 ```
 
 Push the data to the history by (here all 10 minutes)
