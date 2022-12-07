@@ -16,7 +16,7 @@ class FakeGatoHistory():
         self.memorySize, self.minutes, self.currentEntry = 4032, 10, 1
         self.firstEntry = self.lastEntry = self.usedMemory = self.refTime = self.memoryAddress = 0
         self.setTime = self.restarted = True
-        #self.entry2address = lambda e: e % self.memorySize
+        self.entry2address = lambda e: e % self.memorySize
         self.history = [self.accessoryName]
         self.transfer = False
         self.dataStream = ''
@@ -150,6 +150,8 @@ class FakeGatoHistory():
         else:
             self.currentEntry = 1 
         self.transfer = True
+        if self.storage == True:
+            self.globalFakeGatoStorage.remove(self)
 
     def addEntry(self, entry):
         self.entry = entry
@@ -220,7 +222,6 @@ class FakeGatoHistory():
             #logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
             #logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
             #logging.info("116 {0}: {1}".format(self.accessoryName, val))
-
             if self.storage != None:
                 self.save()
         else:
@@ -263,6 +264,7 @@ class FakeGatoHistory():
 
 
     def getCurrentHistoryEntries(self):
+        self.entry2address = lambda e: e % self.memorySize
         if (self.currentEntry <= self.lastEntry) and (self.transfer == True):
             self.memoryAddress = self.entry2address(self.currentEntry)
             for x in self.history:

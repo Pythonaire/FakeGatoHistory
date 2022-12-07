@@ -87,7 +87,7 @@ class FakeGatoStorage():
         writer = self.getWriter(service)
         try:
             logging.info("** Fakegato-storage clean persist file: {0}".format(writer['filename']))
-            with open(writer['filename'], 'rw+') as fs:
+            with open(writer['filename'], 'w') as fs:
                 fs.truncate(0) # resize to 0
                 fs.close()
         except Exception as err:
