@@ -107,7 +107,6 @@ class FakeGatoHistory():
         else:
             return base64.b64decode(x).hex()
     
-
     def calculateAverage(self, params): # callback
         backLog = params['backLog'] if 'backLog' in params else []
         previousAvrg = params['previousAvrg'] if 'previousAvrg' in params else {}
@@ -150,7 +149,7 @@ class FakeGatoHistory():
         else:
             self.currentEntry = 1 
         self.transfer = True
-        if self.storage == True:
+        if self.storage == True and self.loaded == True:
             self.globalFakeGatoStorage.remove(self)
 
     def addEntry(self, entry):
@@ -227,7 +226,6 @@ class FakeGatoHistory():
         else:
             time.sleep(0.1)
             self._addEntry(entry)
-
 
     def save(self):
         if self.loaded == True:

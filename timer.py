@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import logging, threading
 
+logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
 class FakeGatoTimer():
     def __init__(self, minutes, accessoryName, *args, **kwargs):

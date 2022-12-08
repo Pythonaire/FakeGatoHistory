@@ -3,9 +3,6 @@ import logging, time, socket, os, json
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
-fileSuffix = '_persist.json'
-
-
 class FakeGatoStorage():
     def __init__(self, filename, *args, **kwargs):
         self.path = os.path.abspath(os.getcwd()) + "/"
