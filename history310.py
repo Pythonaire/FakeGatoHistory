@@ -149,8 +149,6 @@ class FakeGatoHistory():
         else:
             self.currentEntry = 1 
         self.transfer = True
-        if self.storage == True and self.loaded == True:
-            self.globalFakeGatoStorage.remove(self)
 
     def addEntry(self, entry):
         self.entry = entry
