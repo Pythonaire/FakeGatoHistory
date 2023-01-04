@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import logging, time, math, re, base64, uuid
+import logging, time, math, re, base64
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
 from datetime import datetime
@@ -77,11 +77,12 @@ class FakeGatoHistory():
             self.accessoryType116 = "05 0102 1102 1001 1201 1d01"
             self.accessoryType117 = "1f"
 
-
-    def swap16(self, i):
+    @classmethod
+    def swap16(cls, i):
         return ((i & 0xFF) << 8) | ((i >> 8) & 0xFF)
 
-    def swap32(self, i):
+    @classmethod
+    def swap32(cls, i):
         return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF)
 
     def format32(self, value):
@@ -90,16 +91,19 @@ class FakeGatoHistory():
     def format16(self, value):
         return format(self.swap16(int(value)), '04X')
 
-    def precisionRound(self, num, prec):
+    @classmethod
+    def precisionRound(cls, num, prec):
         factor = math.pow(10, prec)
         return round(num * factor) / factor
 
-    def hexToBase64(self, x):
+    @classmethod
+    def hexToBase64(cls, x):
         string = re.sub(r"[^0-9A-F]", '', ('' + x), flags = re.I)
         b = bytearray.fromhex(string)
         return base64.b64encode(b).decode('utf-8')
     
-    def base64ToHex(self, x):
+    @classmethod
+    def base64ToHex(cls, x):
         if len(x) == 0:
             return x
         else:
@@ -108,25 +112,23 @@ class FakeGatoHistory():
     def calculateAverage(self, params): # callback
         backLog = params['backLog'] if 'backLog' in params else []
         previousAvrg = params['previousAvrg'] if 'previousAvrg' in params else {}
+        #backLog = [{'time': 1672079077, 'temp': 4, 'humidity': 100, 'pressure': 1017}, {'time': 1672079377, 'temp': 4, 'humidity': 100, 'pressure': 1017}]
         timer = params['timer']
-        calc = { 'sum': {}, 'num': {}, 'avrg': {} }
-        tupleVal = [pair for dic in backLog for pair in dic.items() if pair[0]!='time']
-        for index in tupleVal:
-            if not index[0] in calc['sum']: calc['sum'][index[0]] = 0
-            if not index[0] in calc['num']: calc['num'][index[0]] = 0
-            calc['sum'][index[0]] += index[1]
-            calc['num'][index[0]] += 1
-            calc['avrg'][index[0]] = self.precisionRound(calc['sum'][index[0]] / calc['num'][index[0]], 2)
-            if index[0] == 'voc': calc['avrg'][index[0]] = int(calc['avrg'][index[0]])
-        calc['avrg']['time'] = int(round(time.time()))
+        listTuple = [pair for dic in backLog for pair in dic.items() if pair[0]!='time']
+        # tuplePair: [('temp', 4), ('humidity', 100), ('pressure', 1017), ('temp', 4), ('humidity', 100), ('pressure', 1017)]
+        avrg = {k:0 for k, v in backLog[0].items() if k!="time"} #{'temp': 0, 'humidity': 0, 'pressure': 0}
+        avrg = {k:sum(j for i, j in listTuple if i==k) for k, v in avrg.items()}  #{'temp': 8, 'humidity': 200, 'pressure': 2034}
+        avrg = {k:self.precisionRound(v/len(backLog),2) for k, v in avrg.items()} # divided values by counted list
+        if 'voc' in avrg: avrg['voc']=int(avrg['voc'])
+        avrg['time'] = int(round(time.time()))
         listVal = [key for key in previousAvrg if key!='time']
         for index in listVal:
-            if len(backLog) == 0 or (index not in calc['avrg']):
-                calc['avrg'][index] = previousAvrg[index]
-        if len(calc['avrg']) > 1:
-            self._addEntry(calc['avrg'])
+            if len(backLog) == 0 or (index not in avrg):
+                avrg[index] = previousAvrg[index]
+        if len(avrg) > 1:
+            self._addEntry(avrg)
             timer.emptyData(self)
-        return calc['avrg']
+        return avrg
 
     def select_types(self, params): # callback
         backLog = params['backLog'] if 'backLog' in params else []
