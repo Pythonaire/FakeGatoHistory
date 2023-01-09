@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import logging, time, math, re, base64
+from collections import defaultdict
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
 from datetime import datetime
@@ -108,17 +109,20 @@ class FakeGatoHistory():
             return x
         else:
             return base64.b64decode(x).hex()
-     
+
+    def summarize_backLog(self, dict_list):
+        result = defaultdict(int)
+        for d in dict_list:
+            for k, v in d.items():
+                result[k] += v
+        return dict(result)
+
     def calculateAverage(self, params): # callback
-        backLog = params['backLog'] if 'backLog' in params else []
+        backLog = [{k: v for k, v in d.items() if k != 'time'} for d in params['backLog']] if 'backLog' in params else []
         previousAvrg = params['previousAvrg'] if 'previousAvrg' in params else {}
-        #backLog = [{'time': 1672079077, 'temp': 4, 'humidity': 100, 'pressure': 1017}, {'time': 1672079377, 'temp': 4, 'humidity': 100, 'pressure': 1017}]
         timer = params['timer']
-        listTuple = [pair for dic in backLog for pair in dic.items() if pair[0]!='time']
-        # tuplePair: [('temp', 4), ('humidity', 100), ('pressure', 1017), ('temp', 4), ('humidity', 100), ('pressure', 1017)]
-        avrg = {k:0 for k, v in backLog[0].items() if k!="time"} #{'temp': 0, 'humidity': 0, 'pressure': 0}
-        avrg = {k:sum(j for i, j in listTuple if i==k) for k, v in avrg.items()}  #{'temp': 8, 'humidity': 200, 'pressure': 2034}
-        avrg = {k:self.precisionRound(v/len(backLog),2) for k, v in avrg.items()} # divided values by counted list
+        summarized = self.summarize_backLog(backLog)
+        avrg = {k:self.precisionRound(v/len(backLog),2) for k, v in summarized.items()} # divided values by counted list
         if 'voc' in avrg: avrg['voc']=int(avrg['voc'])
         avrg['time'] = int(round(time.time()))
         listVal = [key for key in previousAvrg if key!='time']
