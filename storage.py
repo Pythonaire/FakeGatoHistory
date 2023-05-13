@@ -52,7 +52,7 @@ class FakeGatoStorage():
         while self.writing == True:
             try:
                 logging.info('** Fakegato-storage write FS file: {0}'.format(writer['filename']))
-                with open(writer['filename'], 'w') as fs: #open with truncate
+                with open(writer['filename'], 'a') as fs: #open with append
                     data = json.dumps(params['data'])
                     fs.writelines(data)
                     #json.dump(params['data'], fs)
@@ -70,8 +70,8 @@ class FakeGatoStorage():
         #logging.info("** Fakegato-storage read FS file: {0}".format(writer['filename']))
         try:
             with open(writer['filename'], 'r') as fs:
-                list = fs.readlines()
-                data = json.loads(list[0].rstrip('\n'))
+                listofLines = fs.readlines()
+                data = json.loads(listofLines[0].rstrip('\n'))
                 #for i in list:
                 #    data.append(json.loads(i.rstrip('\n')))
             fs.close()

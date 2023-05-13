@@ -173,75 +173,71 @@ class FakeGatoHistory():
                 self._addEntry(self.entry)
 
     def _addEntry(self, entry):
-        if self.loaded == True:
-            self.entry2address = lambda e: e % self.memorySize
-            if self.usedMemory < self.memorySize:
-                self.usedMemory += 1
-                self.firstEntry = 0
-                self.lastEntry = self.usedMemory
-                self.history.append(self.lastEntry)
-            else:
+        while not self.loaded == True:
+            time.sleep(0.1)
+        self.entry2address = lambda e: e % self.memorySize
+        if self.usedMemory < self.memorySize:
+            self.usedMemory += 1
+            self.firstEntry = 0
+            self.lastEntry = self.usedMemory
+            self.history.append(self.lastEntry)
+        else:
+            self.firstEntry += 1
+            self.lastEntry = self.firstEntry + self.usedMemory
+            self.history.append(self.lastEntry)
+            if self.restarted == True:
+                self.history[self.entry2address(self.lastEntry)] = {'time': entry['time'],'setRefTime': 1}
                 self.firstEntry += 1
                 self.lastEntry = self.firstEntry + self.usedMemory
-                self.history.append(self.lastEntry)
-                if self.restarted == True:
-                    self.history[self.entry2address(self.lastEntry)] = {'time': entry['time'],'setRefTime': 1}
-                    self.firstEntry += 1
-                    self.lastEntry = self.firstEntry + self.usedMemory
-                    self.restarted = False
-            if self.refTime == 0:
-                self.refTime = entry['time'] - EPOCH_OFFSET
-                self.history[self.lastEntry] = {'time': entry['time'],'setRefTime': 1}
-                self.initialTime = entry['time']
-                self.lastEntry += 1
-                self.usedMemory += 1
-                self.history.append(self.lastEntry)
+                self.restarted = False
+        if self.refTime == 0:
+            self.refTime = entry['time'] - EPOCH_OFFSET
+            self.history[self.lastEntry] = {'time': entry['time'],'setRefTime': 1}
+            self.initialTime = entry['time']
+            self.lastEntry += 1
+            self.usedMemory += 1
+            self.history.append(self.lastEntry)
             self.history[self.entry2address(self.lastEntry)] = entry
-            if self.usedMemory < self.memorySize:
-                val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
-                self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
-                self.format32(self.refTime),
-                self.accessoryType116,
-                self.format16(self.usedMemory+1),
-                self.format16(self.memorySize),
-                self.format32(self.firstEntry)
-                ))
-            else:
-                val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
-                self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
-                self.format32(self.refTime),
-                self.accessoryType116,
-                self.format16(self.usedMemory),
-                self.format16(self.memorySize),
-                self.format32(self.firstEntry+1)
-                ))   
+        if self.usedMemory < self.memorySize:
+            val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
+            self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
+            self.format32(self.refTime),
+            self.accessoryType116,
+            self.format16(self.usedMemory+1),
+            self.format16(self.memorySize),
+            self.format32(self.firstEntry)
+            ))
+        else:
+            val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
+            self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
+            self.format32(self.refTime),
+            self.accessoryType116,
+            self.format16(self.usedMemory),
+            self.format16(self.memorySize),
+            self.format32(self.firstEntry+1)
+            ))   
         
-            self.HistoryStatus.set_value(self.hexToBase64(val))
-            #self.service.configure_char("HistoryStatus", value = hexToBase64(val))
-            #logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
-            #logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
-            #logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
-            #logging.info("116 {0}: {1}".format(self.accessoryName, val))
-            if self.storage != None:
-                self.save()
-        else:
-            time.sleep(0.1)
-            self._addEntry(entry)
-
-    def save(self):
-        if self.loaded == True:
-            data = {
-                    'firstEntry': self.firstEntry,
-					'lastEntry': self.lastEntry,
-					'usedMemory': self.usedMemory,
-					'refTime': self.refTime,
-					'initialTime': self.initialTime,
-					'history': self.history
-            }
-            self.globalFakeGatoStorage.write({'service': self, 'data': data})
-        else:
-            time.sleep(0.1)
+        self.HistoryStatus.set_value(self.hexToBase64(val))
+        #self.service.configure_char("HistoryStatus", value = hexToBase64(val))
+        #logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
+        #logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
+        #logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
+        #logging.info("116 {0}: {1}".format(self.accessoryName, val))
+        if self.storage != None:
             self.save()
+    
+    def save(self):
+        while not self.loaded == True:
+            time.sleep(0.1)
+        data = {
+            'firstEntry': self.firstEntry,
+			'lastEntry': self.lastEntry,
+			'usedMemory': self.usedMemory,
+			'refTime': self.refTime,
+			'initialTime': self.initialTime,
+			'history': self.history
+            }
+        self.globalFakeGatoStorage.write({'service': self, 'data': data})
 
     def load(self):
         logging.info("Loading...")
@@ -362,6 +358,7 @@ class FakeGatoHistory():
     
 
     def setCurrentSetTime(self, val):
+        self.uploaded = self.base64ToHex(val)
         x = bytearray(base64.b64decode(val))
         x.reverse()
         date_time = datetime.fromtimestamp(EPOCH_OFFSET + int(x.hex(),16))
