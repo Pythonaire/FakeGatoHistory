@@ -2,9 +2,10 @@
 
 Based on the fabulous work of <https://github.com/simont77/fakegato-history> to work with HAP-Python <https://github.com/ikalchev/HAP-python>.
 
-## Differences to the javascript implementation
+## Differences to the original javascript implementation
 
-The original fakegato-history have a variable mem cache for data records. I set that fixed to 4032 and interval of 10 minutes (tp prevent memory holes). That gives 4032/6 = 672 hours values in the memory. You can store history values to prevent lost data by adding "True".
+The original fakegato-history have a variable mem cache for data records. I set the mem cache to 4032 and interval of 10 minutes (to prevent memory holes). That gives 4032/6 = 672 hours of values in the memory. 
+Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented too, but not fully tested yet. 
 
 ## How To (example Weather data)
 
@@ -33,7 +34,7 @@ Link the history to your device class (here the example 'weather'):
 self.History = FakeGatoHistory('weather', self)
 ```
 
-If you like to store history data to prevent holes, in case of system crash,  you can add "True". That is the same functionality as the original fakegato-history offer.
+If you like to store history data to prevent holes, in case of system crash,  you can add "True". That is the same functionality as the original fakegato-history offer, but not fully tested yet.
 
 ```#!/usr/bin/env python3
 self.History = FakeGatoHistory('weather', self, True)
