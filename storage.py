@@ -52,10 +52,12 @@ class FakeGatoStorage():
         while self.writing == True:
             try:
                 logging.info('** Fakegato-storage write FS file: {0}'.format(writer['filename']))
-                with open(writer['filename'], 'a') as fs: #open with append
+                '''
+                older values, that not send are stored in the appended "history" key, so the only need the last dict -> write with truncate = w
+                '''
+                with open(writer['filename'], 'w') as fs: #open with append
                     data = json.dumps(params['data'])
                     fs.writelines(data)
-                    #json.dump(params['data'], fs)
                 self.writing = False
                 fs.close()
             except Exception as e:
@@ -66,18 +68,15 @@ class FakeGatoStorage():
     def read(self, service):
         writer = self.getWriter(service)
         logging.info("** Fakegato-storage read: {}".format(writer['filename']))
-        # return {'service': service, 'filename': self.path + hostname + '_' + self.filename}
         #logging.info("** Fakegato-storage read FS file: {0}".format(writer['filename']))
         try:
             with open(writer['filename'], 'r') as fs:
                 listofLines = fs.readlines()
                 data = json.loads(listofLines[0].rstrip('\n'))
-                #for i in list:
-                #    data.append(json.loads(i.rstrip('\n')))
             fs.close()
         except Exception as err:
             logging.info("**ERROR fetching persisting data restart from zero : {0}".format(err))
-            data = ''
+            data = []
         return data
 
     def remove(self, service):

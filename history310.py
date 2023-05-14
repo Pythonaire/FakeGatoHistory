@@ -31,15 +31,14 @@ class FakeGatoHistory():
         self.HistoryEntries.getter_callback = self.getCurrentHistoryEntries
         self.HistoryRequest.setter_callback = self.setCurrentHistoryRequest
         self.CurrentTime.setter_callback = self.setCurrentSetTime
-        if self.storage == None: self.loaded = True
+        if self.storage == None: self.cached = False
 
         self.globalFakeGatoTimer = FakeGatoTimer(self.minutes,  self.accessoryName)
 
         if self.storage != None:
-            self.loaded = False
             self.globalFakeGatoStorage = FakeGatoStorage(self.accessoryName)
             self.globalFakeGatoStorage.addWriter(self)
-            self.loaded = self.load()
+            self.cached = self.load()
 
         match self.accessoryType:
             case 'weather':
@@ -173,8 +172,10 @@ class FakeGatoHistory():
                 self._addEntry(self.entry)
 
     def _addEntry(self, entry):
-        while not self.loaded == True:
-            time.sleep(0.1)
+        if self.storage != None:
+            while self.cached == False:
+                time.sleep(0.1)
+
         self.entry2address = lambda e: e % self.memorySize
         if self.usedMemory < self.memorySize:
             self.usedMemory += 1
@@ -197,7 +198,7 @@ class FakeGatoHistory():
             self.lastEntry += 1
             self.usedMemory += 1
             self.history.append(self.lastEntry)
-            self.history[self.entry2address(self.lastEntry)] = entry
+        self.history[self.entry2address(self.lastEntry)] = entry
         if self.usedMemory < self.memorySize:
             val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
             self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
@@ -225,19 +226,22 @@ class FakeGatoHistory():
         #logging.info("116 {0}: {1}".format(self.accessoryName, val))
         if self.storage != None:
             self.save()
-    
+        
+
     def save(self):
-        while not self.loaded == True:
-            time.sleep(0.1)
-        data = {
-            'firstEntry': self.firstEntry,
-			'lastEntry': self.lastEntry,
-			'usedMemory': self.usedMemory,
-			'refTime': self.refTime,
-			'initialTime': self.initialTime,
-			'history': self.history
+        if self.cached == True:
+            data = {
+                    'firstEntry': self.firstEntry,
+					'lastEntry': self.lastEntry,
+					'usedMemory': self.usedMemory,
+					'refTime': self.refTime,
+					'initialTime': self.initialTime,
+					'history': self.history
             }
-        self.globalFakeGatoStorage.write({'service': self, 'data': data})
+            self.globalFakeGatoStorage.write({'service': self, 'data': data})
+        else:
+            time.sleep(0.1)
+            self.save()
 
     def load(self):
         logging.info("Loading...")
@@ -251,11 +255,9 @@ class FakeGatoHistory():
                 self.refTime = data['refTime']  # type: ignore
                 self.initialTime = data['initialTime']  # type: ignore
                 self.history = data['history']  # type: ignore
-            self.loaded = True
         except Exception as e:
-            logging.info("**ERROR fetching persisting data restart from zero - invalid JSON**".format(e))
-            self.loaded = False
-        return self.loaded
+            logging.info("** HISTORY CACHE is empty, restart from zero - or invalid JSON **".format(e))
+        return True
 
 
     def getCurrentHistoryEntries(self):
@@ -358,7 +360,6 @@ class FakeGatoHistory():
     
 
     def setCurrentSetTime(self, val):
-        self.uploaded = self.base64ToHex(val)
         x = bytearray(base64.b64decode(val))
         x.reverse()
         date_time = datetime.fromtimestamp(EPOCH_OFFSET + int(x.hex(),16))
