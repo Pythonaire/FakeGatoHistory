@@ -14,22 +14,22 @@ class FakeGatoStorage():
         logging.info("** Fakegato-storage AddWriter : {0}".format(service.accessoryName))
         newWriter = {'service': service, 'filename': self.path + self.hostname + '_' + self.filename}
 		#Unique filename per homebridge server.  Allows test environments on other servers not to break prod.
-        exists = False
+        new = False
         self.writers.append(newWriter)
         try:
             with open(newWriter['filename'], 'r') as fs:
                 if os.path.getsize(newWriter['filename']) != 0:
                     logging.info("Found History in Persistant Storage")
                     fs.close()
-                    exists = True
+                    new = False
                     #self.load(newWriter['service'])
         except IOError:
             fs = open(newWriter['filename'], 'w')
             logging.info("Create a empty File : {0}".format(newWriter['filename']))
             fs.close()
-            exists = True
-        return exists
-
+            new = True
+        return new
+    
     def getWriter(self, service):
         for i in self.writers:
             if i['service'] == service:

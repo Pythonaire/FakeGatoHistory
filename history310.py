@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import logging, time, math, re, base64, asyncio
+import logging, time, math, re, base64, asyncio, os
 from collections import defaultdict
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
@@ -174,6 +174,9 @@ class FakeGatoHistory():
             case _:
                 self._addEntry(self.entry)
 
+    def checkFile(self):
+        os.stat("file").st_size == 0
+
     def _addEntry(self, entry):
         self.entry2address = lambda e: e % self.memorySize
         if self.usedMemory < self.memorySize:
@@ -252,6 +255,7 @@ class FakeGatoHistory():
                 self.initialTime = data['initialTime']  # type: ignore
                 self.history = data['history']  # type: ignore
                 logging.info("** Loading Cache Data for '{0}', {1} entries **".format(self.history[0], self.lastEntry))
+                self.globalFakeGatoStorage.remove(self)
         except Exception as e:
             logging.info("** HISTORY CACHE is empty, restart from zero - or invalid JSON **".format(e))
         self.cached = True
