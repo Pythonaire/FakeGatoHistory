@@ -53,9 +53,9 @@ class FakeGatoStorage():
             try:
                 logging.info('** Fakegato-storage write FS file: {0}'.format(writer['filename']))
                 '''
-                older values, that not send are stored in the appended "history" key, so the only need the last dict -> write with truncate = w
+                older values, that not send are stored in the  "history" key, so the only need the last dict -> write with truncate = w
                 '''
-                with open(writer['filename'], 'w') as fs: #open with append
+                with open(writer['filename'], 'w') as fs: #open with overwrite
                     data = json.dumps(params['data'])
                     fs.writelines(data)
                 self.writing = False
@@ -68,7 +68,6 @@ class FakeGatoStorage():
     def read(self, service):
         writer = self.getWriter(service)
         logging.info("** Fakegato-storage read: {}".format(writer['filename']))
-        #logging.info("** Fakegato-storage read FS file: {0}".format(writer['filename']))
         try:
             with open(writer['filename'], 'r') as fs:
                 listofLines = fs.readlines()
