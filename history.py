@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import logging, time, math, re, base64
+import logging, time, math, re, base64, asyncio
 from collections import defaultdict
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
@@ -22,6 +22,7 @@ class FakeGatoHistory():
         self.transfer = False
         self.dataStream = ''
         self.storage = storage
+        self.cached = False
 
         logging.info('Registring Events {0}'.format(self.accessoryName))
         self.service = self.accessory.add_preload_service('History', chars =['HistoryStatus','HistoryEntries','HistoryRequest','SetTime'])
@@ -40,7 +41,9 @@ class FakeGatoHistory():
             self.loaded = False
             self.globalFakeGatoStorage = FakeGatoStorage(self.accessoryName)
             self.globalFakeGatoStorage.addWriter(self)
-            self.loaded = self.load()
+            asyncio.run(self.load()) # load data at restart of service
+            while self.cached == False: # wait until data loaded from file
+                time.sleep(0.1)
 
         if self.accessoryType == 'weather':
             self.accessoryType116 = "03 0102 0202 0302"
@@ -174,92 +177,86 @@ class FakeGatoHistory():
             self._addEntry(self.entry)
 
     def _addEntry(self, entry):
-        if self.loaded == True:
-            self.entry2address = lambda e: e % self.memorySize
-            if self.usedMemory < self.memorySize:
-                self.usedMemory += 1
-                self.firstEntry = 0
-                self.lastEntry = self.usedMemory
-                self.history.append(self.lastEntry)
-            else:
+        self.entry2address = lambda e: e % self.memorySize
+        if self.usedMemory < self.memorySize:
+            self.usedMemory += 1
+            self.firstEntry = 0
+            self.lastEntry = self.usedMemory
+            self.history.append(self.lastEntry)
+        else:
+            self.firstEntry += 1
+            self.lastEntry = self.firstEntry + self.usedMemory
+            self.history.append(self.lastEntry)
+            if self.restarted == True:
+                self.history[self.entry2address(self.lastEntry)] = {'time': entry['time'],'setRefTime': 1}
                 self.firstEntry += 1
                 self.lastEntry = self.firstEntry + self.usedMemory
-                self.history.append(self.lastEntry)
-                if self.restarted == True:
-                    self.history[self.entry2address(self.lastEntry)] = {'time': entry['time'],'setRefTime': 1}
-                    self.firstEntry += 1
-                    self.lastEntry = self.firstEntry + self.usedMemory
-                    self.restarted = False
-            if self.refTime == 0:
-                self.refTime = entry['time'] - EPOCH_OFFSET
-                self.history[self.lastEntry] = {'time': entry['time'],'setRefTime': 1}
-                self.initialTime = entry['time']
-                self.lastEntry += 1
-                self.usedMemory += 1
-                self.history.append(self.lastEntry)
-            self.history[self.entry2address(self.lastEntry)] = entry
-            if self.usedMemory < self.memorySize:
-                val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
-                self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
-                self.format32(self.refTime),
-                self.accessoryType116,
-                self.format16(self.usedMemory + 1),
-                self.format16(self.memorySize),
-                self.format32(self.firstEntry)
-                ))
-            else:
-                val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
-                self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
-                self.format32(self.refTime),
-                self.accessoryType116,
-                self.format16(self.usedMemory),
-                self.format16(self.memorySize),
-                self.format32(self.firstEntry+1)
-                ))   
+                self.restarted = False
+        if self.refTime == 0:
+            self.refTime = entry['time'] - EPOCH_OFFSET
+            self.history[self.lastEntry] = {'time': entry['time'],'setRefTime': 1}
+            self.initialTime = entry['time']
+            self.lastEntry += 1
+            self.usedMemory += 1
+            self.history.append(self.lastEntry)
+        self.history[self.entry2address(self.lastEntry)] = entry
+        if self.usedMemory < self.memorySize:
+            val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
+            self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
+            self.format32(self.refTime),
+            self.accessoryType116,
+            self.format16(self.usedMemory + 1),
+            self.format16(self.memorySize),
+            self.format32(self.firstEntry)
+            ))
+        else:
+            val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
+            self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
+            self.format32(self.refTime),
+            self.accessoryType116,
+            self.format16(self.usedMemory),
+            self.format16(self.memorySize),
+            self.format32(self.firstEntry+1)
+            ))   
         
-            self.HistoryStatus.set_value(self.hexToBase64(val))
-            #logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
-            #logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
-            #logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
-            #logging.info("116 {0}: {1}".format(self.accessoryName, val))
-            if self.storage != None:
-                self.save()
-        else:
-            time.sleep(0.1)
-            self._addEntry(entry)
+        self.HistoryStatus.set_value(self.hexToBase64(val))
+        #logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
+         #logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
+         #logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
+         #logging.info("116 {0}: {1}".format(self.accessoryName, val))
+        if self.storage != None:
+            asyncio.run(self.save())
+        
 
-    def save(self):
-        if self.loaded == True:
-            data = {
-                    'firstEntry': self.firstEntry,
-					'lastEntry': self.lastEntry,
-					'usedMemory': self.usedMemory,
-					'refTime': self.refTime,
-					'initialTime': self.initialTime,
-					'history': self.history
-            }
-            self.globalFakeGatoStorage.write({'service': self, 'data': data})
-        else:
-            time.sleep(0.1)
-            self.save()
+    async def save(self):
+        data = {
+                'firstEntry': self.firstEntry,
+				'lastEntry': self.lastEntry,
+				'usedMemory': self.usedMemory,
+				'refTime': self.refTime,
+				'initialTime': self.initialTime,
+				'history': self.history
+                }
+        self.globalFakeGatoStorage.write({'service': self, 'data': data})
+       
 
-    def load(self):
+    async def load(self):
         logging.info("Loading...")
         data = self.globalFakeGatoStorage.read(self)
         try:
             if len(data)!=0:
-                logging.info("read data from {0} : {1}".format(self.accessoryName,data))
                 self.firstEntry = data['firstEntry']  # type: ignore
                 self.lastEntry = data['lastEntry']  # type: ignore
                 self.usedMemory = data['usedMemory']  # type: ignore
                 self.refTime = data['refTime']  # type: ignore
                 self.initialTime = data['initialTime']  # type: ignore
                 self.history = data['history']  # type: ignore
-            self.loaded = True
+                logging.info("** Loading Cache Data for '{0}', {1} entries **".format(self.history[0], self.lastEntry))
+                self.globalFakeGatoStorage.remove(self)
         except Exception as e:
-            logging.info("**ERROR fetching persisting data restart from zero - invalid JSON**".format(e))
-            self.loaded = False
-        return self.loaded
+            logging.info("** HISTORY CACHE is empty, restart from zero - or invalid JSON **".format(e))
+            self.cached = True
+    
 
     def getCurrentHistoryEntries(self):
         self.entry2address = lambda e: e % self.memorySize

@@ -174,9 +174,6 @@ class FakeGatoHistory():
             case _:
                 self._addEntry(self.entry)
 
-    def checkFile(self):
-        os.stat("file").st_size == 0
-
     def _addEntry(self, entry):
         self.entry2address = lambda e: e % self.memorySize
         if self.usedMemory < self.memorySize:
