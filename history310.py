@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import logging, time, math, re, base64, asyncio, os
+import logging, time, math, re, base64
 from collections import defaultdict
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
@@ -39,7 +39,7 @@ class FakeGatoHistory():
         if self.storage != None:
             self.globalFakeGatoStorage = FakeGatoStorage(self.accessoryName)
             self.globalFakeGatoStorage.addWriter(self)
-            asyncio.run(self.load()) # load data at restart of service
+            self.load() # load data at restart of service
             while self.cached == False: # wait until data loaded from file
                 time.sleep(0.1)
 
@@ -225,10 +225,10 @@ class FakeGatoHistory():
         #logging.info("116 {0}: {1}".format(self.accessoryName, val))
 
         if self.storage != None:
-            asyncio.run(self.save())
+            self.save()
         
 
-    async def save(self):
+    def save(self):
         data = {
             'firstEntry': self.firstEntry,
 			'lastEntry': self.lastEntry,
@@ -240,7 +240,7 @@ class FakeGatoHistory():
         self.globalFakeGatoStorage.write({'service': self, 'data': data})
         
 
-    async def load(self):
+    def load(self):
         logging.info("Loading...")
         data = self.globalFakeGatoStorage.read(self)
         try:
@@ -362,5 +362,6 @@ class FakeGatoHistory():
         x.reverse()
         date_time = datetime.fromtimestamp(EPOCH_OFFSET + int(x.hex(),16))
         d = date_time.strftime("%d.%m.%Y, %H:%M:%S")
-        logging.info("Clock adjust {0}: {1} - {2}".format(self.accessoryName, self.base64ToHex(val), d))
+        logging.info("Data uploded for {0}: {1} - {2}".format(self.accessoryName, self.base64ToHex(val), d))
+        self.globalFakeGatoStorage.remove(self)
         
