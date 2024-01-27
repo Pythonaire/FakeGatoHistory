@@ -2,10 +2,10 @@
 
 Based on the fabulous work of <https://github.com/simont77/fakegato-history> to work with HAP-Python <https://github.com/ikalchev/HAP-python>.
 
-## Differences to the original javascript implementation
+## some modifications ...
 
-The original fakegato-history have a variable mem cache for data records. I set the mem cache to 4032 and interval of 10 minutes (to prevent memory holes). That gives 4032/6 = 672 hours of values in the memory. 
-Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented too. After successful upload data, HAP interface send time update for syncronisation und remove existing file and create a new. This, because the file can grow up with thound of data. 
+The original fakegato-history have a variable mem cache for data records. I set the mem cache fixed to 4032 and the interval of 10 minutes (to prevent memory holes). That gives 4032/6 = 672 hours of values in the memory. 
+Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented just under python3.10 and above. If the data are uploaded to the homekit (initiated by the client), homekit sends a time value update for synchronisation. I used this, to drop the written files. 
 
 ## How To (example Weather data)
 
@@ -34,7 +34,7 @@ Link the history to your device class (here the example 'weather'):
 self.History = FakeGatoHistory('weather', self)
 ```
 
-If you like to store history data to prevent holes, in case of system crash,  you can add "True". That is the same functionality as the original fakegato-history offer, but not fully tested yet.
+If you like to store history data to prevent holes, in case of system crash,  you can add "True". That is the same functionality as the original fakegato-history offer. Are the data uploaded to the client, these stored files will be deleted/renewed.
 
 ```#!/usr/bin/env python3
 self.History = FakeGatoHistory('weather', self, True)
