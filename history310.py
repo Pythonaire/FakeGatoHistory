@@ -363,5 +363,5 @@ class FakeGatoHistory():
         date_time = datetime.fromtimestamp(EPOCH_OFFSET + int(x.hex(),16))
         d = date_time.strftime("%d.%m.%Y, %H:%M:%S")
         logging.info("Data uploded for {0}: {1} - {2}".format(self.accessoryName, self.base64ToHex(val), d))
-        self.globalFakeGatoStorage.remove(self)
+        #self.globalFakeGatoStorage.remove(self)
         
