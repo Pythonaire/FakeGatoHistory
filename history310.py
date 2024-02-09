@@ -122,7 +122,7 @@ class FakeGatoHistory():
     def calculateAverage(self, params): # callback
         backLog = [{k: v for k, v in d.items() if k != 'time'} for d in params['backLog']] if 'backLog' in params else []
         previousAvrg = params['previousAvrg'] if 'previousAvrg' in params else {}
-        timer = params['timer']
+        #timer = params['timer']
         summarized = self.summarize_backLog(backLog)
         avrg = {k:self.precisionRound(v/len(backLog),2) for k, v in summarized.items()} # divided values by counted list
         if 'voc' in avrg: avrg['voc']=int(avrg['voc'])
@@ -133,7 +133,8 @@ class FakeGatoHistory():
                 avrg[index] = previousAvrg[index]
         if len(avrg) > 1:
             self._addEntry(avrg)
-            timer.emptyData(self)
+            self.globalFakeGatoTimer.emptyData(self)
+            #timer.emptyData(self)
         return avrg
 
     def select_types(self, params): # callback
@@ -149,12 +150,6 @@ class FakeGatoHistory():
                 actualEntry['status'] = backLog[0]['status']
             self._addEntry(actualEntry)
 
-    def sendHistory(self, address):
-        if address != 0:
-            self.currentEntry = address
-        else:
-            self.currentEntry = 1
-        self.transfer = True
 
     def addEntry(self, entry):
         self.entry = entry
@@ -174,7 +169,7 @@ class FakeGatoHistory():
             case _:
                 self._addEntry(self.entry)
 
-    def _addEntry(self, entry):
+    def _addEntry(self, entry): 
         self.entry2address = lambda e: e % self.memorySize
         if self.usedMemory < self.memorySize:
             self.usedMemory += 1
@@ -190,6 +185,7 @@ class FakeGatoHistory():
                 self.firstEntry += 1
                 self.lastEntry = self.firstEntry + self.usedMemory
                 self.restarted = False
+        
         if self.refTime == 0:
             self.refTime = entry['time'] - EPOCH_OFFSET
             self.history[self.lastEntry] = {'time': entry['time'],'setRefTime': 1}
@@ -257,20 +253,17 @@ class FakeGatoHistory():
             logging.info("** HISTORY CACHE is empty, restart from zero - or invalid JSON **".format(e))
         self.cached = True
 
-
     def getCurrentHistoryEntries(self):
         self.entry2address = lambda e: e % self.memorySize
         if (self.currentEntry <= self.lastEntry) and (self.transfer == True):
             self.memoryAddress = self.entry2address(self.currentEntry)
             for x in self.history:
-            #for x in range(10):
                 if self.history[self.memoryAddress].get('setRefTime') == 1 or self.setTime == True or self.currentEntry == self.firstEntry +1:
                     self.dataStream = "".join([self.dataStream, ",15", self.format32(self.currentEntry),
                     " 0100 0000 81", self.format32(self.refTime), "0000 0000 00 0000"
                     ])
                     self.setTime = False
                 else:
-                    #logging.info("{0} Entry: {1}, Address: {2}".format(self.accessoryName, self.currentEntry, self.memoryAddress))
                     match self.accessoryType:
                         case 'weather':
                             self.dataStream = "".join([self.dataStream, ",10 ", self.format32(self.currentEntry),
@@ -353,8 +346,10 @@ class FakeGatoHistory():
         valInt = int(valHex[4:12], base=16)
         address = self.swap32(valInt)
         #hexAddress = '{:x}'.format(address)
-        #logging.info("Address requested {0}: {1}".format(self.accessoryName, hexAddress))
-        self.sendHistory(address)
+        #logging.info("Address requested {0}: {1}".format(self.accessoryName, address))
+        self.currentEntry = address if address != 0 else 1
+        self.transfer = True
+        self.globalFakeGatoStorage.remove(self)
     
 
     def setCurrentSetTime(self, val):
@@ -362,6 +357,6 @@ class FakeGatoHistory():
         x.reverse()
         date_time = datetime.fromtimestamp(EPOCH_OFFSET + int(x.hex(),16))
         d = date_time.strftime("%d.%m.%Y, %H:%M:%S")
-        logging.info("Data uploded for {0}: {1} - {2}".format(self.accessoryName, self.base64ToHex(val), d))
-        #self.globalFakeGatoStorage.remove(self)
+        #logging.info("Data uploded for {0}: {1} - {2}".format(self.accessoryName, self.base64ToHex(val), d))
+        logging.info("Data uploded for {0} at {1}".format(self.accessoryName, d))
         
