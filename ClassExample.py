@@ -34,7 +34,7 @@ class Weather(Accessory):
 
         self.History = FakeGatoHistory('weather', self)
         
-    @Accessory.run_at_interval(300)
+    @Accessory.run_at_interval(600)
     def run(self):
         '''
         in this example a external function pull sensor data from a sensor node, defined by self.node.
