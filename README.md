@@ -40,11 +40,11 @@ If you like to store history data to prevent holes, in case of system crash,  yo
 self.History = FakeGatoHistory('weather', self, True)
 ```
 
-Push the data to the history by (here all 5 minutes)
+Push the data to the history by (here all 10 minutes)
 
 ```#!/usr/bin/env python3
 
-@Accessory.run_at_interval(300)
+@Accessory.run_at_interval(600)
     def run(self):
     ....
     self.History.addEntry({'time':int(round(time.time())),'temp':XXX,'humidity': XXX, 'pressure':XXX})
