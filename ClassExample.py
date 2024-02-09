@@ -37,9 +37,7 @@ class Weather(Accessory):
     @Accessory.run_at_interval(300)
     def run(self):
         '''
-        in this example a external function pull sensor data from a sensor node, defined by self.node.
-        The return is a dictionary 
-        {'B':Battery,'AT':AirTemperature,'AH':AirHumidity,'AP':AirPressure}
+        in this example a external function getnodeData() pull sensor data from a sensor node, defined by self.node.
         '''
         nodeBattery = getnodeData('Battery')
         nodeHumidity = getnodeData('Humidity')
