@@ -5,9 +5,9 @@ Based on the fabulous work of <https://github.com/simont77/fakegato-history> to 
 ## some modifications ...
 
 The original fakegato-history have a variable mem cache for data records. I set the mem cache fixed to 4032 and the interval of 10 minutes (to prevent memory holes). That gives 4032/6 = 672 hours of values in the memory. 
-Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented just under python3.10 and above. If the data are uploaded to the homekit (initiated by the client), homekit sends a time value update for synchronisation. 
+Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented just under python3.10 and above. If the data are uploaded to the homekit (initiated by the client), homekit sends a time value update for synchronisation and request the data. If data are uploaded to the homekit, the persistent stored data no longer needed and the file will be cleared. This prevent larger files and slow reaction.
 
-## How To (example Weather data)
+## How To to use (example Weather data)
 
 HAP-Python <https://github.com/ikalchev/HAP-python> holds the default Apple Homekit services and characteristics in two files 'services.json' and 'characteristics.json' under "/usr/local/lib/python3.x/dist-packages/pyhap/ressources". Apple change these definition in newer IOS versions. Additionally, maybe you like to define your own services. Because of that, i use my own service and characteristic definitions.
 
