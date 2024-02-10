@@ -350,6 +350,8 @@ class FakeGatoHistory():
         self.currentEntry = address if address != 0 else 1
         self.transfer = True
         self.globalFakeGatoStorage.remove(self)
+        self.currentEntry = 1
+        self.firstEntry = self.lastEntry = self.usedMemory = self.refTime = self.memoryAddress = 0
     
 
     def setCurrentSetTime(self, val):
