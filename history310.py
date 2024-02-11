@@ -347,11 +347,13 @@ class FakeGatoHistory():
         address = self.swap32(valInt)
         #hexAddress = '{:x}'.format(address)
         #logging.info("Address requested {0}: {1}".format(self.accessoryName, address))
-        self.currentEntry = address if address != 0 else 1
+        if address != 0:
+            self.currentEntry = address
+        else:
+            self.currentEntry = 1 
         self.transfer = True
-        self.globalFakeGatoStorage.remove(self)
-        self.currentEntry = 1
-        self.firstEntry = self.lastEntry = self.usedMemory = self.refTime = self.memoryAddress = 0
+        if self.cached == True:
+            self.globalFakeGatoStorage.remove(self)
     
 
     def setCurrentSetTime(self, val):
