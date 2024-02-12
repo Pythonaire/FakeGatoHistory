@@ -5,7 +5,7 @@ Based on the fabulous work of <https://github.com/simont77/fakegato-history> to 
 ## some modifications ...
 
 The original fakegato-history have a variable mem cache for data records. I set the mem cache fixed to 4032 and the interval of 10 minutes (to prevent memory holes). That gives 4032/6 = 672 hours of values in the memory. 
-Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented just under python3.10 and above. If the data are uploaded to the homekit (initiated by the client), homekit sends a time value update for synchronisation and request the data. If data are uploaded to the homekit, the persistent stored data no longer needed and the file will be cleared. This prevent larger files and slow reaction.
+Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented just under python3.10 and above. This file can be removed after uploading data to the client.
 
 ## How To to use (example Weather data)
 
