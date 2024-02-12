@@ -348,9 +348,6 @@ class FakeGatoHistory():
         #logging.info("Address requested {0}: {1}".format(self.accessoryName, address))
         self.currentEntry = address if address != 0 else  1
         self.transfer = True
-        if self.cached == True:
-            self.globalFakeGatoStorage.remove(self)
-    
 
     def setCurrentSetTime(self, val):
         x = bytearray(base64.b64decode(val))
@@ -358,5 +355,5 @@ class FakeGatoHistory():
         date_time = datetime.fromtimestamp(EPOCH_OFFSET + int(x.hex(),16))
         d = date_time.strftime("%d.%m.%Y, %H:%M:%S")
         #logging.info("Data uploded for {0}: {1} - {2}".format(self.accessoryName, self.base64ToHex(val), d))
-        logging.info("Data uploded for {0} at {1}".format(self.accessoryName, d))
+        #logging.info("Data uploded for {0} at {1}".format(self.accessoryName, d))
         
