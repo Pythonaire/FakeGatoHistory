@@ -51,7 +51,7 @@ class FakeGatoStorage():
         writer = self.getWriter(params['service'])
         while self.writing == True:
             try:
-                logging.info('** Fakegato-storage write FS file: {0}'.format(writer['filename']))
+                #logging.info('** Fakegato-storage write FS file: {0}'.format(writer['filename']))
                 '''
                 older values, that not send are stored in the  "history" key, so the only need the last dict -> write with truncate = w
                 '''
@@ -74,7 +74,7 @@ class FakeGatoStorage():
                 data = json.loads(listofLines[0].rstrip('\n'))
             fs.close()
         except Exception as err:
-            logging.info("**ERROR fetching persisting data restart from zero : {0}".format(err))
+            logging.info("**Cannot fetching persisting data restart from zero : {0}".format(err))
             data = []
         return data
 
