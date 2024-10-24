@@ -5,7 +5,7 @@ Based on the fabulous work of <https://github.com/simont77/fakegato-history> to 
 ## some modifications ...
 
 The original fakegato-history have a variable mem cache for data records. I set the mem cache fixed to 4032 and the interval of 10 minutes (to prevent memory holes). That gives 4032/6 = 672 hours of values in the memory. 
-Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented just under python3.10 and above. This file can be removed after uploading data to the client. Each time, the client request and loads data for the device in the app, the file on the harddisk will be flushed.
+Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented just under python3.10 and above. This file can be removed after uploading data to the client. Each time, the client request and loads data for the device in the app, the file on the harddisk will be flushed, so only data that missing in on client side will be stored.
 
 ## How To to use (example Weather data)
 
