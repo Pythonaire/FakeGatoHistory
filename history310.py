@@ -25,6 +25,7 @@ class FakeGatoHistory():
         
         logging.info('Registring Events {0}'.format(self.accessoryName))
         self.service = self.accessory.add_preload_service('History', chars =['HistoryStatus','HistoryEntries','HistoryRequest','SetTime'])
+        #logging.info("self.service: {0}, self.service.type: {1}".format(self.service, type(self.service)))
         self.HistoryEntries = self.service.configure_char("HistoryEntries")
         self.HistoryRequest = self.service.configure_char('HistoryRequest')
         self.HistoryStatus = self.service.configure_char("HistoryStatus")
@@ -79,6 +80,7 @@ class FakeGatoHistory():
             case 'thermo':
                 self.accessoryType116 = "05 0102 1102 1001 1201 1d01"
                 self.accessoryType117 = "1f"
+
             
     @classmethod
     def swap16(cls, i):
@@ -247,7 +249,7 @@ class FakeGatoHistory():
                 self.refTime = data['refTime']  # type: ignore
                 self.initialTime = data['initialTime']  # type: ignore
                 self.history = data['history']  # type: ignore
-                logging.info("** Loading Cache Data for '{0}', {1} entries **".format(self.history[0], self.lastEntry))
+                logging.info("** Loading Cache Data for '{0}', {1} entries **".format(self.accessoryName, self.lastEntry))
                 self.globalFakeGatoStorage.remove(self)
         except Exception as e:
             logging.info("** HISTORY CACHE is empty, restart from zero - or invalid JSON **".format(e))
@@ -330,6 +332,8 @@ class FakeGatoHistory():
                 self.currentEntry += 1
                 self.memoryAddress = self.entry2address(self.currentEntry)
                 if (self.currentEntry > self.lastEntry):
+                    self.firstEntry = self.lastEntry = self.usedMemory = self.refTime = self.memoryAddress = 0
+                    self.globalFakeGatoStorage.remove(self)
                     break
             #logging.info("Data {0}: {1}".format(self.accessoryName, self.dataStream))
             sendStream= self.dataStream
