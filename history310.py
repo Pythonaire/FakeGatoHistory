@@ -21,7 +21,6 @@ class FakeGatoHistory():
         self.transfer = False
         self.dataStream = ''
         self.storage = storage
-        self.cached = False
         
         logging.info('Registring Events {0}'.format(self.accessoryName))
         self.service = self.accessory.add_preload_service('History', chars =['HistoryStatus','HistoryEntries','HistoryRequest','SetTime'])
@@ -33,7 +32,7 @@ class FakeGatoHistory():
         self.HistoryEntries.getter_callback = self.getCurrentHistoryEntries
         self.HistoryRequest.setter_callback = self.setCurrentHistoryRequest
         self.CurrentTime.setter_callback = self.setCurrentSetTime
-        if self.storage == None: self.cached = False
+        if self.storage == None: self.loaded = False
 
         self.globalFakeGatoTimer = FakeGatoTimer(self.minutes,  self.accessoryName)
 
@@ -41,7 +40,7 @@ class FakeGatoHistory():
             self.globalFakeGatoStorage = FakeGatoStorage(self.accessoryName)
             self.globalFakeGatoStorage.addWriter(self)
             self.load() # load data at restart of service
-            while self.cached == False: # wait until data loaded from file
+            while self.loaded == False: # wait until data loaded from file
                 time.sleep(0.1)
 
         match self.accessoryType:
@@ -172,7 +171,7 @@ class FakeGatoHistory():
                 self._addEntry(self.entry)
 
     def _addEntry(self, entry): 
-        self.entry2address = lambda e: e % self.memorySize
+        if self.loaded: self.entry2address = lambda e: e % self.memorySize
         if self.usedMemory < self.memorySize:
             self.usedMemory += 1
             self.firstEntry = 0
@@ -227,7 +226,8 @@ class FakeGatoHistory():
         
 
     def save(self):
-        data = {
+        if self.loaded:
+            data = {
             'firstEntry': self.firstEntry,
 			'lastEntry': self.lastEntry,
 			'usedMemory': self.usedMemory,
@@ -235,7 +235,7 @@ class FakeGatoHistory():
 			'initialTime': self.initialTime,
 			'history': self.history
             }
-        self.globalFakeGatoStorage.write({'service': self, 'data': data})
+            self.globalFakeGatoStorage.write({'service': self, 'data': data})
         
 
     def load(self):
@@ -253,7 +253,7 @@ class FakeGatoHistory():
                 self.globalFakeGatoStorage.remove(self)
         except Exception as e:
             logging.info("** HISTORY CACHE is empty, restart from zero - or invalid JSON **".format(e))
-        self.cached = True
+        self.loaded = True
 
     def getCurrentHistoryEntries(self):
         self.entry2address = lambda e: e % self.memorySize
@@ -332,8 +332,6 @@ class FakeGatoHistory():
                 self.currentEntry += 1
                 self.memoryAddress = self.entry2address(self.currentEntry)
                 if (self.currentEntry > self.lastEntry):
-                    self.firstEntry = self.lastEntry = self.usedMemory = self.refTime = self.memoryAddress = 0
-                    self.globalFakeGatoStorage.remove(self)
                     break
             #logging.info("Data {0}: {1}".format(self.accessoryName, self.dataStream))
             sendStream= self.dataStream
