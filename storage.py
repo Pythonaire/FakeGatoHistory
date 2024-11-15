@@ -81,9 +81,9 @@ class FakeGatoStorage():
     def remove(self, service):
         writer = self.getWriter(service)
         try:
-            logging.info("** Fakegato-storage clean persist file: {0}".format(writer['filename']))
             with open(writer['filename'], 'w') as fs:
                 fs.truncate(0) # resize to 0
                 fs.close()
+            logging.info("** Fakegato-storage clean up persist file: {0}".format(writer['filename']))
         except Exception as err:
             logging.info("**ERROR cleaning '{0}' - {1}".format(writer['filename'], err))
