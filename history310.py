@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import logging, time, math, re, base64
+import logging, time, math, re, base64, struct
 from collections import defaultdict
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
@@ -24,7 +24,6 @@ class FakeGatoHistory():
         
         logging.info('Registring Events {0}'.format(self.accessoryName))
         self.service = self.accessory.add_preload_service('History', chars =['HistoryStatus','HistoryEntries','HistoryRequest','SetTime'])
-        #logging.info("self.service: {0}, self.service.type: {1}".format(self.service, type(self.service)))
         self.HistoryEntries = self.service.configure_char("HistoryEntries")
         self.HistoryRequest = self.service.configure_char('HistoryRequest')
         self.HistoryStatus = self.service.configure_char("HistoryStatus")
@@ -79,15 +78,14 @@ class FakeGatoHistory():
             case 'thermo':
                 self.accessoryType116 = "05 0102 1102 1001 1201 1d01"
                 self.accessoryType117 = "1f"
-
-            
+    
     @classmethod
     def swap16(cls, i):
-        return ((i & 0xFF) << 8) | ((i >> 8) & 0xFF)
-
+        return struct.unpack("<H", struct.pack(">H", i))[0]
+    
     @classmethod
     def swap32(cls, i):
-        return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF)
+        return struct.unpack("<I", struct.pack(">I", i))[0]
 
     def format32(self, value):
         return format(self.swap32(int(value)), '08X')
@@ -99,19 +97,16 @@ class FakeGatoHistory():
     def precisionRound(cls, num, prec):
         factor = math.pow(10, prec)
         return round(num * factor) / factor
-
+    
     @classmethod
     def hexToBase64(cls, x):
-        string = re.sub(r"[^0-9A-F]", '', ('' + x), flags = re.I)
-        b = bytearray.fromhex(string)
+        filtered_hex = ''.join(c for c in x if c.isalnum() and c in '0123456789ABCDEFabcdef')
+        b = bytes.fromhex(filtered_hex)
         return base64.b64encode(b).decode('utf-8')
     
     @classmethod
     def base64ToHex(cls, x):
-        if len(x) == 0:
-            return x
-        else:
-            return base64.b64decode(x).hex()
+        return x if len(x) == 0 else base64.b64decode(x).hex()
 
     def summarize_backLog(self, dict_list):
         result = defaultdict(int)
@@ -224,7 +219,6 @@ class FakeGatoHistory():
         if self.storage != None:
             self.save()
         
-
     def save(self):
         if self.loaded:
             data = {
@@ -358,4 +352,3 @@ class FakeGatoHistory():
         d = date_time.strftime("%d.%m.%Y, %H:%M:%S")
         #logging.info("Data uploded for {0}: {1} - {2}".format(self.accessoryName, self.base64ToHex(val), d))
         #logging.info("Data uploded for {0} at {1}".format(self.accessoryName, d))
-        
