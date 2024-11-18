@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import logging, time, math, re, base64, struct
+import logging, time, math, base64, struct
 from collections import defaultdict
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
@@ -8,6 +8,7 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
 EPOCH_OFFSET = 978307200
+
 
 class FakeGatoHistory():
     def __init__(self, accessoryType, accessory, storage= None, *args, **kwargs):
@@ -78,6 +79,7 @@ class FakeGatoHistory():
             case 'thermo':
                 self.accessoryType116 = "05 0102 1102 1001 1201 1d01"
                 self.accessoryType117 = "1f"
+
     
     @classmethod
     def swap16(cls, i):
@@ -162,6 +164,12 @@ class FakeGatoHistory():
                 self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
             case 'energy':
                 self.globalFakeGatoTimer.addData({ 'entry': self.entry, 'service': self})
+            case 'custom':
+                for service in self.accessory.services:
+                    for characteristic in service.characteristics:
+                        displayName = characteristic.display_name
+                        uuid = getattr(characteristic, 'type_id', None)
+                        print(f"service.characteristics {displayName} uuid: {uuid}")
             case _:
                 self._addEntry(self.entry)
 
@@ -190,32 +198,17 @@ class FakeGatoHistory():
             self.usedMemory += 1
             self.history.append(self.lastEntry)
         self.history[self.entry2address(self.lastEntry)] = entry
+        format32entryTime = self.format32(entry['time'] - self.refTime - EPOCH_OFFSET)
+        format32refTime = self.format32(self.refTime)
+        format16memorySize = self.format16(self.memorySize)
         if self.usedMemory < self.memorySize:
-            val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
-            self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
-            self.format32(self.refTime),
-            self.accessoryType116,
-            self.format16(self.usedMemory+1),
-            self.format16(self.memorySize),
-            self.format32(self.firstEntry)
-            ))
+            format16usedMemory = self.format16(self.usedMemory+1)
+            format32firstEntry = self.format32(self.firstEntry)
         else:
-            val = ('{0}00000000{1}{2}{3}{4}{5}000000000101'.format(
-            self.format32(entry['time'] - self.refTime - EPOCH_OFFSET),
-            self.format32(self.refTime),
-            self.accessoryType116,
-            self.format16(self.usedMemory),
-            self.format16(self.memorySize),
-            self.format32(self.firstEntry+1)
-            ))   
-        
+            format16usedMemory = self.format16(self.usedMemory)
+            format32firstEntry = self.format32(self.firstEntry+1)
+        val = f'{format32entryTime}00000000{format32refTime}{self.accessoryType116}{format16usedMemory}{format16memorySize}{format32firstEntry}000000000101'
         self.HistoryStatus.set_value(self.hexToBase64(val))
-        #self.service.configure_char("HistoryStatus", value = hexToBase64(val))
-        #logging.info("First entry {0}: {1}".format(self.accessoryName, self.firstEntry))
-        #logging.info("Last entry {0}: {1}".format(self.accessoryName, self.lastEntry))
-        #logging.info("Used memory {0}: {1}".format(self.accessoryName, self.usedMemory))
-        #logging.info("116 {0}: {1}".format(self.accessoryName, val))
-
         if self.storage != None:
             self.save()
         
@@ -253,81 +246,54 @@ class FakeGatoHistory():
         self.entry2address = lambda e: e % self.memorySize
         if (self.currentEntry <= self.lastEntry) and (self.transfer == True):
             self.memoryAddress = self.entry2address(self.currentEntry)
-            for x in self.history:
+            for _ in self.history:
                 if self.history[self.memoryAddress].get('setRefTime') == 1 or self.setTime == True or self.currentEntry == self.firstEntry +1:
                     self.dataStream = "".join([self.dataStream, ",15", self.format32(self.currentEntry),
                     " 0100 0000 81", self.format32(self.refTime), "0000 0000 00 0000"
                     ])
                     self.setTime = False
                 else:
+                    format32currentEntry = self.format32(self.currentEntry)
+                    format32Time = self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET)
                     match self.accessoryType:
                         case 'weather':
-                            self.dataStream = "".join([self.dataStream, ",10 ", self.format32(self.currentEntry),
-                            self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
-                            "-", self.accessoryType117, ":", self.format16(self.history[self.memoryAddress].get('temp') * 100),
-                            " ", self.format16(self.history[self.memoryAddress].get('humidity') * 100),
-                            " ", self.format16(self.history[self.memoryAddress].get('pressure') * 10)
-                            ])
+                            format16Temp = self.format16(self.history[self.memoryAddress].get('temp') * 100)
+                            format16Humidity = self.format16(self.history[self.memoryAddress].get('humidity') * 100)
+                            format16Pressure = self.format16(self.history[self.memoryAddress].get('pressure') * 10)
+                            self.dataStream += f",10 {format32currentEntry}{format32Time}-{self.accessoryType117}:{format16Temp} {format16Humidity} {format16Pressure}"
                         case 'energy':
-                            self.dataStream = "".join([self.dataStream, ",14 ", self.format32(self.currentEntry),
-                            self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
-                            "-", self.accessoryType117, ":0000 0000 ", self.format16(self.history[self.memoryAddress].get('power') * 10),
-                            " 0000 0000"
-                            ])
+                            format16Power = self.format16(self.history[self.memoryAddress].get('power') * 10)
+                            self.dataStream += f",14 {format32currentEntry}{format32Time}-{self.accessoryType117}:0000 0000 {format16Power} 0000 0000"
                         case 'room':
-                            self.dataStream = "".join([self.dataStream, ",13 ", self.format32(self.currentEntry),
-                            self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
-			                self.accessoryType117,
-			                self.format16(self.history[self.memoryAddress].get('temp') * 100),
-			                self.format16(self.history[self.memoryAddress].get('humidity') * 100),
-			                self.format16(self.history[self.memoryAddress].get('ppm')),
-                            "0000 00"
-                            ])
+                            format16Temp = self.format16(self.history[self.memoryAddress].get('temp') * 100)
+                            format16Humidity = self.format16(self.history[self.memoryAddress].get('humidity') * 100)
+                            format16PPM = self.format16(self.history[self.memoryAddress].get('ppm'))
+                            self.dataStream += f",13 {format32currentEntry}{format32Time}{self.accessoryType117}{format16Temp}{format16Humidity}{format16PPM}0000 00"
                         case 'room2':
-                            self.dataStream = "".join([self.dataStream, ",15 ", self.format32(self.currentEntry),
-                            self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
-                            self.accessoryType117,
-                            self.format16(self.history[self.memoryAddress].get('temp') * 100),
-                            self.format16(self.history[self.memoryAddress].get('humidity') * 100),
-                            self.format16(self.history[self.memoryAddress].get('voc')),
-                            "0054 a80f01"
-                            ])
+                            format16Temp = self.format16(self.history[self.memoryAddress].get('temp') * 100)
+                            format16Humidity = self.format16(self.history[self.memoryAddress].get('humidity') * 100)
+                            format16VOC = self.format16(self.history[self.memoryAddress].get('voc'))
+                            self.dataStream += f",15 {format32currentEntry}{format32Time}{self.accessoryType117}{format16Temp}{format16Humidity}{format16VOC}0054 a80f01"
                         case 'door' | 'motion' | 'switch':
-                            self.dataStream = "".join([self.dataStream, ",0b ", self.format32(self.currentEntry),
-                            self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
-			                self.accessoryType117,
-			                format(self.history[self.memoryAddress].get('status'), '02X')
-                            ])
+                            formatStatus = format(self.history[self.memoryAddress].get('status'), '02X')
+                            self.dataStream += f",0b {format32currentEntry}{format32Time}{self.accessoryType117}{formatStatus}"
                         case 'aqua':
                             if self.history[self.memoryAddress].get('status') == True:
-                                self.dataStream = "".join([self.dataStream, ",0d ", self.format32(self.currentEntry),
-                                self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
-			                    self.accessoryType117,
-			                    format(self.history[self.memoryAddress].get('status'), '02X'),
-                                " 300c"
-                                ])
+                                formatStatus = format(self.history[self.memoryAddress].get('status'), '02X')
+                                self.dataStream = f"+,0d {format32currentEntry}{format32Time}{self.accessoryType117}{formatStatus} 300c"
                             else:
-                                self.dataStream = "".join([self.dataStream, ",15 ", self.format32(self.currentEntry),
-                                self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
-			                    self.accessoryType117bis,
-			                    format(self.history[self.memoryAddress].get('status'), '02X'),
-			                    self.format32(self.history[self.memoryAddress].get('waterAmount')),
-                                " 00000000 300c"
-                                ])
+                                formatStatus = format(self.history[self.memoryAddress].get('status'), '02X')
+                                format32waterAmount = self.format32(self.history[self.memoryAddress].get('waterAmount'))
+                                self.dataStream += f",15 {format32currentEntry}{format32Time}{self.accessoryType117bis}{formatStatus}{format32waterAmount} 00000000 300c"
                         case 'thermo':
-                            self.dataStream = "".join([self.dataStream, ",11 ", self.format32(self.currentEntry),
-                            self.format32(self.history[self.memoryAddress].get('time') - self.refTime - EPOCH_OFFSET),
-                            self.accessoryType117,
-			                self.format16(self.history[self.memoryAddress].get('currentTemp') * 100),
-			                self.format16(self.history[self.memoryAddress].get('setTemp') * 100),
-			                format(self.history[self.memoryAddress].get('valvePosition'), '02X'),
-                            " 0000"
-                            ])
+                            format16currentTemp = self.format16(self.history[self.memoryAddress].get('currentTemp') * 100)
+                            format16setTemp = self.format16(self.history[self.memoryAddress].get('setTemp') * 100)
+                            formatvalvePos = format(self.history[self.memoryAddress].get('valvePosition'), '02X')
+                            self.dataStream += f",11 {format32currentEntry}{format32Time}{self.accessoryType117}{format16currentTemp}{format16setTemp}{formatvalvePos} 0000"
                 self.currentEntry += 1
                 self.memoryAddress = self.entry2address(self.currentEntry)
                 if (self.currentEntry > self.lastEntry):
                     break
-            #logging.info("Data {0}: {1}".format(self.accessoryName, self.dataStream))
             sendStream= self.dataStream
             self.dataStream =''
             return self.hexToBase64(sendStream)
@@ -337,11 +303,8 @@ class FakeGatoHistory():
 
     def setCurrentHistoryRequest(self, val):
         valHex = self.base64ToHex(val)
-        #logging.info("Data request {0}: {1}".format(self.accessoryName, valHex))
         valInt = int(valHex[4:12], base=16)
         address = self.swap32(valInt)
-        #hexAddress = '{:x}'.format(address)
-        #logging.info("Address requested {0}: {1}".format(self.accessoryName, address))
         self.currentEntry = address if address != 0 else  1
         self.transfer = True
 
@@ -350,5 +313,5 @@ class FakeGatoHistory():
         x.reverse()
         date_time = datetime.fromtimestamp(EPOCH_OFFSET + int(x.hex(),16))
         d = date_time.strftime("%d.%m.%Y, %H:%M:%S")
-        #logging.info("Data uploded for {0}: {1} - {2}".format(self.accessoryName, self.base64ToHex(val), d))
         #logging.info("Data uploded for {0} at {1}".format(self.accessoryName, d))
+        

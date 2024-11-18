@@ -36,16 +36,6 @@ class FakeGatoStorage():
                 return i
             break
 
-    def _getWriterIndex(self, service):
-        return self.writers.index(service)
-
-    def getWriters(self):
-        return self.writers
-
-    def delWriter(self, service):
-        index = self._getWriterIndex(service)
-        del self.writers[index: index+1]
-
     def write(self, params):
         self.writing = True
         writer = self.getWriter(params['service'])
