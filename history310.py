@@ -79,6 +79,10 @@ class FakeGatoHistory():
             case 'thermo':
                 self.accessoryType116 = "05 0102 1102 1001 1201 1d01"
                 self.accessoryType117 = "1f"
+
+    @classmethod
+    def swap32(cls, i):
+        return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF)
     
     @classmethod
     def format32(cls, value):
