@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from re import X
 from pyhap.accessory import Accessory
 from pyhap.const import CATEGORY_SENSOR
 import logging, time
