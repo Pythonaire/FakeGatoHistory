@@ -1,6 +1,6 @@
 # FakeGatoHistory
 
-Based on the fabulous work of <https://github.com/simont77/fakegato-history> to work with HAP-Python <https://github.com/ikalchev/HAP-python>.
+Based on the fabulous work of <https://github.com/simont77/fakegato-history> to work with HAP-Python <https://github.com/ikalchev/HAP-python>. Minimum Python version is 3.10.
 
 ## some modifications ...
 
