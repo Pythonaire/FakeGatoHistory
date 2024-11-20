@@ -1943,30 +1943,15 @@
   "Format" :"data",
   "Permissions": ["pw", "hd"]
  },
-"ElectricCurrent": {
+"Ampere": {
   "UUID": "E863F126-079E-48FF-8F27-9C2605A29F52",
   "Format": "float",
   "Permissions": ["pr","ev"],
-  "unit":"A"
+  "unit":"Ampere",
+  "maxValue":1000000000,
+  "minValue": 0,
+  "minStep": 0.001
  },
-"DayHarvest": {
-  "UUID": "DFF20394-D2E0-4C57-8FBE-02D3723896EA",
-  "Format": "float",
-  "Permissions": ["pr","ev"],
-  "unit": "Wh",
-  "maxValue": 100000,
-  "minValue": 0,
-  "minStep": 0.1
-},
-"YearHarvest": {
-  "UUID": "B9BCDA72-F049-4A78-9ED9-C9BAD8A21773",
-  "Format": "float",
-  "Permissions": ["pr","ev"],
-  "unit": "kWh",
-  "maxValue": 100000,
-  "minValue": 0,
-  "minStep": 0.1
-},
 "EveAirQuality": {
   "UUID": "E863F10B-079E-48FF-8F27-9C2605A29F52",
   "Format": "uint16",
@@ -2004,7 +1989,10 @@
   "UUID": "E863F10A-079E-48FF-8F27-9C2605A29F52",
   "Format": "float",
   "Permissions": ["pr","ev"],
-  "unit": "V"
+  "unit": "Volt",
+  "minValue": 0,
+  "maxValue": 1000,
+  "minStep": 0.001
 },
 "UVIndex": {
   "UUID": "05BA0FE0-B848-4226-906D-5B64272E05CE",
@@ -2025,15 +2013,15 @@
   "Format": "float",
   "Permissions": ["pr","ev"],
   "unit": "kWh",
-  "maxValue": 100000000000,
+  "maxValue": 1000000,
   "minValue": 0,
-  "minStep": 0.001
+  "minStep": 0.01
 },
 "CurrentConsumption": {
   "UUID": "E863F10D-079E-48FF-8F27-9C2605A29F52",
-  "Format": "float",
+  "Format": "uint16",
   "Permissions": ["pr","ev"],
-  "unit": "W",
+  "unit": "Watt",
   "maxValue": 100000,
   "minValue": 0,
   "minStep": 1

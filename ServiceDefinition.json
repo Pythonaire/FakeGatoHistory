@@ -122,12 +122,12 @@
   "UUID":"0000021A-0000-1000-8000-0026BB765291",
   "RequiredCharacteristics": [
     "EventSnapshotsActive",
-    "HomeKitCameraActive"],
+    "HomeKitCameraActive",
+    "PeriodicSnapshotsActive"],
   "OptionalCharacteristics": [
     "CameraOperatingModeIndicator",
     "ManuallyDisabled",
     "NightVision",
-    "PeriodicSnapshotsActive",
     "ThirdPartyCameraActive",
     "DiagonalFieldOfView"]
   },
@@ -789,14 +789,6 @@
      "Name",
      "Elevation"]   
    },
-"PowerMeter": {
-  "UUID": "00000001-0000-1777-8000-775D67EC4377",
-  "RequiredCharacteristics": [
-    "CurrentConsumption",
-    "TotalConsumption"],
-  "OptionalCharacteristics": [
-     "Name"]
- },
  "History": {
   "UUID": "E863F007-079E-48FF-8F27-9C2605A29F52",
   "RequiredCharacteristics": [
@@ -817,6 +809,19 @@
       "OptionalCharacteristics": [
         "EveAirParticalDensity",
         "Elevation"]
+  },
+  "PowerSensor": {
+    "UUID": "BE737D07-E3D6-493E-B171-0F92D4EB6423",
+    "RequiredCharacteristics": [
+      "CurrentConsumption",
+      "TotalConsumption"
+      ],
+      "OptionalCharacteristics": [
+      "Name",
+      "ResetTotal",
+      "Voltage",
+      "Ampere"
+      ]
   }
 }
 
