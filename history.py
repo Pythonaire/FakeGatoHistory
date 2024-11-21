@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import logging, time, math, base64
+import logging, time, math, base64, re
 from collections import defaultdict
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
@@ -81,30 +81,35 @@ class FakeGatoHistory():
                 self.accessoryType117 = "1f"
 
     @classmethod
+    def swap16(cls, i):
+        return ((i & 0xFF) << 8) | ((i >> 8) & 0xFF)
+
+    def format16(self, value):
+        return format(self.swap16(int(value)), '04X')
+
+    @classmethod
     def swap32(cls, i):
         return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF)
     
-    @classmethod
-    def format32(cls, value):
-        return format(((int(value) & 0xFF) << 24) |
-                    ((int(value) & 0xFF00) << 8) |
-                    ((int(value) & 0xFF0000) >> 8) |
-                    ((int(value) & 0xFF000000) >> 24),
-                    '08X')
-    @classmethod
-    def format16(cls, value):
-        return format(((int(value) & 0xFF) << 8) | (int(value) >> 8), '04X')
+    def format32(self, value):
+        return format(self.swap32(int(value)), '08X')
 
     @classmethod
     def precisionRound(cls, num, prec):
         factor = math.pow(10, prec)
         return round(num * factor) / factor
-    
+
     @classmethod
     def hexToBase64(cls, x):
-        filtered_hex = ''.join(c for c in x if c.isalnum() and c in '0123456789ABCDEFabcdef')
-        b = bytes.fromhex(filtered_hex)
+        string = re.sub(r"[^0-9A-F]", '', ('' + x), flags = re.I)
+        b = bytearray.fromhex(string)
         return base64.b64encode(b).decode('utf-8')
+    
+    #@classmethod
+    #def hexToBase64(cls, x):
+    #    filtered_hex = ''.join(c for c in x if c.isalnum() and c in '0123456789ABCDEFabcdef')
+    #    b = bytes.fromhex(filtered_hex)
+    #    return base64.b64encode(b).decode('utf-8')
     
     @classmethod
     def base64ToHex(cls, x):
