@@ -85,14 +85,15 @@ class FakeGatoHistory():
         return ((i & 0xFF) << 8) | ((i >> 8) & 0xFF)
 
     def format16(self, value):
-        return format(self.swap16(int(value)), '04X')
+        return format(((int(value) & 0xFF) << 8) | ((int(value) >> 8) & 0xFF), '04X')
 
     @classmethod
     def swap32(cls, i):
         return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF)
     
     def format32(self, value):
-        return format(self.swap32(int(value)), '08X')
+        return format(((int(value) & 0xFF) << 24) | ((int(value) & 0xFF00) << 8) | 
+                      ((int(value) >> 8) & 0xFF00) | ((int(value) >> 24) & 0xFF), '08X')
 
     @classmethod
     def precisionRound(cls, num, prec):
