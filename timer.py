@@ -3,22 +3,22 @@ import logging, threading
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
+def call_repeatedly(interval, func, *args, **kwargs):
+        stopped = threading.Event()
+        def loop():
+            while not stopped.wait(interval): # the first call is in `interval` secs
+                func(*args, **kwargs)
+                func()
+        threading.Thread(target=loop, daemon=True).start()    
+        return stopped.set
+
 class FakeGatoTimer():
     def __init__(self, minutes, accessoryName, *args, **kwargs):
         self.minutes = minutes
         self.subscribedServices = []
         self.running = False
         self.accessoryName = accessoryName
-
-    def call_repeatedly(self, interval, func):
-        stopped = threading.Event()
-        def loop():
-            while not stopped.wait(stopped.wait(interval)): # the first call is in `interval` secs
-                #func(*args)
-                func()
-        threading.Thread(target=loop, daemon=True).start()    
-        return stopped.set
-        
+    
     def subscribe(self, service, callback):
         #logging.info("** Fakegato-timer Subscription : {0}".format(service.accessoryName))
         newService = {
@@ -80,7 +80,7 @@ class FakeGatoTimer():
             if self.running == False:
                 logging.info("**Start Fakegato-Timer {0} with {1} minutes inverval**".format(self.accessoryName, self.minutes))
                 self.running = True
-                self.cancel_future_calls = self.call_repeatedly(self.minutes*60, self.executeCallbacks)
+                self.cancel_future_calls = call_repeatedly(self.minutes*60, self.executeCallbacks)
 
     def emptyData(self, service):
         #logging.info("**Fakegato-timer: emptyData ** {0} ".format(service.accessoryName))
