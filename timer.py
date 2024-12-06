@@ -8,7 +8,6 @@ def call_repeatedly(interval, func, *args, **kwargs):
         def loop():
             while not stopped.wait(interval): # the first call is in `interval` secs
                 func(*args, **kwargs)
-                func()
         threading.Thread(target=loop, daemon=True).start()    
         return stopped.set
 
