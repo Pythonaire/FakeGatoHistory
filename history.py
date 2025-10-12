@@ -3,7 +3,7 @@ from collections import defaultdict
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
 from datetime import datetime
-import os, psutil, shutil
+import os
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 

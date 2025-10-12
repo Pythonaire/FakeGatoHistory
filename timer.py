@@ -22,7 +22,6 @@ class FakeGatoTimer():
         self._backlog_lock = threading.Lock()
     
     def subscribe(self, service, callback):
-        #logging.info("** Fakegato-timer Subscription : {0}".format(service.accessoryName))
         newService = {
 			'service': service,
 			'callback': callback, # -> calculateAverage/select_types
@@ -52,7 +51,6 @@ class FakeGatoTimer():
                 logging.warning(f"Error cancelling timer: {e}")
         self.running = False
         
-
     def executeCallbacks(self):
         #logging.info("**Fakegato-timer: executeCallbacks** {0} ** interval {1} minutes**".format(self.accessoryName, self.minutes))
         if len(self.subscribedServices) != 0:

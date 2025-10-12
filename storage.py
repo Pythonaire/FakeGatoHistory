@@ -60,7 +60,6 @@ class FakeGatoStorage():
         while self.writing == True:
             with self._write_lock:
                 try:
-                    #logging.info('** Fakegato-storage write FS file: {0}'.format(writer['filename']))
                     '''
                     older values, that not send are stored in the  "history" key, so the only need the last dict -> write with truncate = w
                     '''
