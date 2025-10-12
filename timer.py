@@ -1,15 +1,17 @@
-#!/usr/bin/env python3
-import logging, threading
+import logging
+import threading
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
 def call_repeatedly(interval, func, *args, **kwargs):
-        stopped = threading.Event()
-        def loop():
-            while not stopped.wait(interval): # the first call is in `interval` secs
+    stopped = threading.Event()
+    lock = threading.Lock()  # Lock to protect shared state (stopped)
+    def loop():
+        while not stopped.wait(interval):
+            with lock:  # Ensure that no other thread is modifying stopped
                 func(*args, **kwargs)
-        threading.Thread(target=loop, daemon=True).start()    
-        return stopped.set
+    threading.Thread(target=loop, daemon=True).start()
+    return stopped
 
 class FakeGatoTimer():
     def __init__(self, minutes, accessoryName, *args, **kwargs):
@@ -17,6 +19,7 @@ class FakeGatoTimer():
         self.subscribedServices = []
         self.running = False
         self.accessoryName = accessoryName
+        self._backlog_lock = threading.Lock()
     
     def subscribe(self, service, callback):
         #logging.info("** Fakegato-timer Subscription : {0}".format(service.accessoryName))
@@ -32,58 +35,96 @@ class FakeGatoTimer():
     def getSubscriber(self, service):
         for i in self.subscribedServices:
             if i['service'] == service:
-                break
-        return i
+                return i
+        try:
+            service_name = getattr(service, "accessoryName", str(service))
+        except Exception:
+            service_name = str(service)
+        logging.warning(f"Subscriber for service {service_name} not found.")
+        return None
 
     def stop(self):
         logging.info("**Stop Global Fakegato-Timer****")
-        self.cancel_future_calls()
+        if hasattr(self, 'cancel_future_calls') and callable(self.cancel_future_calls):
+            try:
+                self.cancel_future_calls()
+            except Exception as e:
+                logging.warning(f"Error cancelling timer: {e}")
         self.running = False
         
 
     def executeCallbacks(self):
-        logging.info("**Fakegato-timer: executeCallbacks** {0} ** interval {1} minutes**".format(self.accessoryName, self.minutes))
+        #logging.info("**Fakegato-timer: executeCallbacks** {0} ** interval {1} minutes**".format(self.accessoryName, self.minutes))
         if len(self.subscribedServices) != 0:
             for service in self.subscribedServices:
-                if callable(service["callback"]): # --> calculateAverage
-                    service["previousAvrg"] = service["callback"](
-                        {
-                        'backLog': service['backLog'],
-                        'previousAvrg': service['previousAvrg'],
-                        'timer': self,
-                        'immediate': False
-                        }
-                        )
+                try:
+                    if callable(service.get("callback")):
+                        service["previousAvrg"] = service["callback"](
+                            {
+                            'backLog': service['backLog'],
+                            'previousAvrg': service['previousAvrg'],
+                            'timer': self,
+                            'immediate': False
+                            }
+                            )
+                except Exception as e:
+                    try:
+                        service_name = getattr(service.get('service'), 'accessoryName', str(service))
+                    except Exception:
+                        service_name = str(service)
+                    logging.warning(f"Callback error for subscriber {service_name}: {e}")
 
     def executeImmediateCallback(self, service):
-        logging.info("**Fakegato-timer: executeImmediateCallback**") 
-        if callable(service['callback']) and len(service['backLog']) != 0:
+        logging.info("**Fakegato-timer: executeImmediateCallback**")
+        if service is None:
+            logging.warning("executeImmediateCallback: service is None, skipping callback.")
+            return
+        if callable(service.get('callback')) and len(service.get('backLog', [])) != 0:
             service['callback']({
-				'backLog': service['backLog'],
-				'timer': self,
-				'immediate': True
-			})
+                'backLog': service['backLog'],
+                'timer': self,
+                'immediate': True
+            })
+        else:
+            logging.warning("executeImmediateCallback: Callback not callable or backLog empty for service.")
     
     def addData(self, params):
         data = params['entry']
         service = params['service']
         immediateCallback = params['immediateCallback'] if 'immediateCallback' in params else False
-        if immediateCallback == True: # door or motion -> replace
-            if len(self.getSubscriber(service)['backLog']) == 0:
-                self.getSubscriber(service)['backLog'].append(data)
+        subscriber = self.getSubscriber(service)
+        if subscriber is None:
+            try:
+                service_name = getattr(service, "accessoryName", str(service))
+            except Exception:
+                service_name = str(service)
+            logging.warning(f"addData: No subscriber found for service {service_name}. Data not added.")
+            return
+        with self._backlog_lock:
+            if immediateCallback: # door or motion -> replace
+                if len(subscriber['backLog']) == 0:
+                    subscriber['backLog'].append(data)
+                else:
+                    subscriber['backLog'][0] = data
+                self.executeImmediateCallback(subscriber)
             else:
-                self.getSubscriber(service)['backLog'][0] = data
-            self.executeImmediateCallback(self.getSubscriber(service))
-        else:
-            self.getSubscriber(service)['backLog'].append(data)
-            if self.running == False:
-                logging.info("**Start Fakegato-Timer {0} with {1} minutes inverval**".format(self.accessoryName, self.minutes))
-                self.running = True
-                self.cancel_future_calls = call_repeatedly(self.minutes*60, self.executeCallbacks)
+                subscriber['backLog'].append(data)
+                if self.running == False:
+                    logging.info("**Start Fakegato-Timer {0} with {1} minutes inverval**".format(self.accessoryName, self.minutes))
+                    self.running = True
+                    self.cancel_future_calls = call_repeatedly(self.minutes*60, self.executeCallbacks)
 
     def emptyData(self, service):
         #logging.info("**Fakegato-timer: emptyData ** {0} ".format(service.accessoryName))
         source = self.getSubscriber(service)
-        if len(source['backLog']) != 0:
-            source['previousBackLog'] = source['backLog']
-            source['backLog'] = []
+        if source is None:
+            try:
+                service_name = getattr(service, "accessoryName", str(service))
+            except Exception:
+                service_name = str(service)
+            logging.warning(f"emptyData: No subscriber found for service {service_name}. Cannot empty data.")
+            return
+        with self._backlog_lock:
+            if len(source['backLog']) != 0:
+                source['previousBackLog'] = source['backLog']
+                source['backLog'] = []
