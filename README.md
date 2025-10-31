@@ -5,7 +5,7 @@ Based on the fabulous work of <https://github.com/simont77/fakegato-history> to 
 ## some modifications ...
 
 The original fakegato-history have a variable mem cache for data records. I set the mem cache fixed to 4032 and the interval of 10 minutes (to prevent memory holes). That gives 4032/6 = 672 hours of values in the memory. 
-Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented too, but only on local space. This file can be removed after uploading data to the client anytime.
+Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented too, but only on local storage space. Each time, the client upload data to the homekit, the local cached data will be deleted/reseted, beside the last 10 values. The last 10 values are always hold, to prevent history holes for sure. 
 
 ## How To to use (example Weather data)
 
