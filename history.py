@@ -1,15 +1,32 @@
-import logging, time, math, base64, re
-from collections import defaultdict
+import logging, time, math, base64, re, json
+import threading
+from collections import defaultdict, deque
 from timer import FakeGatoTimer
 from storage import FakeGatoStorage
+import history_entry_formatter
 from datetime import datetime
+import itertools
 import os
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
 EPOCH_OFFSET = 978307200
+HEX_RE = re.compile(r"[^0-9A-F]", re.I)
 
 class FakeGatoHistory():
+        # --- Class-level formatter dictionary (shared by all instances) ---
+    ENTRY_FORMATTERS = {
+        'weather': history_entry_formatter.format_weather_entry,
+        'energy': history_entry_formatter.format_energy_entry,
+        'room': history_entry_formatter.format_room_entry,
+        'room2': history_entry_formatter.format_room2_entry,
+        'door': history_entry_formatter.format_door_motion_switch_entry,
+        'motion': history_entry_formatter.format_door_motion_switch_entry,
+        'switch': history_entry_formatter.format_door_motion_switch_entry,
+        'aqua': history_entry_formatter.format_aqua_entry,
+        'thermo': history_entry_formatter.format_thermo_entry,
+    }
+
     def __init__(self, accessoryType, accessory, storage= None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.accessory, self.accessoryName, self.accessoryType = accessory, accessory.display_name, accessoryType
@@ -17,13 +34,15 @@ class FakeGatoHistory():
         self.firstEntry = self.lastEntry = self.usedMemory = self.refTime = self.memoryAddress = 0
         self.setTime = self.restarted = True
         self.entry2address = lambda e: e % self.memorySize
-        self.history = []
+        self.history = deque(maxlen=self.memorySize)
         self.transfer = False
         self.dataStream = ''
         self.storage = storage
         self.lastSentEntry = 0  # Track last entry sent to HomeKit for pruning
+        self._dirty = False  # For async batched storage writes
+        
 
-        logging.info('Registring Events {0}'.format(self.accessoryName))
+        logging.info(f'Registring Events {self.accessoryName}')
         self.service = self.accessory.add_preload_service('History', chars =['HistoryStatus','HistoryEntries','HistoryRequest','SetTime'])
         self.HistoryEntries = self.service.configure_char("HistoryEntries")
         self.HistoryRequest = self.service.configure_char('HistoryRequest')
@@ -34,6 +53,9 @@ class FakeGatoHistory():
         self.CurrentTime.setter_callback = self.setCurrentSetTime
         if self.storage == None: self.loaded = False
 
+        # --- use shared formatter dictionary ---
+        self.entry_formatters = self.ENTRY_FORMATTERS
+
         self.globalFakeGatoTimer = FakeGatoTimer(self.minutes,  self.accessoryName)
 
         if self.storage != None:
@@ -42,6 +64,7 @@ class FakeGatoHistory():
             self.load() # load data at restart of service
             while self.loaded == False: # wait until data loaded from file
                 time.sleep(0.1)
+            self._start_storage_worker()
 
         match self.accessoryType:
             case 'weather':
@@ -80,6 +103,11 @@ class FakeGatoHistory():
                 self.accessoryType116 = "05 0102 1102 1001 1201 1d01"
                 self.accessoryType117 = "1f"
 
+        if self.currentEntry < self.firstEntry:
+            self.currentEntry = self.firstEntry
+        if self.currentEntry > self.lastEntry:
+            self.currentEntry = self.firstEntry
+
     @classmethod
     def swap16(cls, i):
         return ((i & 0xFF) << 8) | ((i >> 8) & 0xFF)
@@ -101,7 +129,7 @@ class FakeGatoHistory():
 
     @classmethod
     def hexToBase64(cls, x):
-        string = re.sub(r"[^0-9A-F]", '', ('' + x), flags = re.I)
+        string = HEX_RE.sub('', x)
         b = bytearray.fromhex(string)
         return base64.b64encode(b).decode('utf-8')
     
@@ -117,17 +145,43 @@ class FakeGatoHistory():
         return dict(result)
 
     def calculateAverage(self, params): # callback
-        backLog = [{k: v for k, v in d.items() if k != 'time'} for d in params['backLog']] if 'backLog' in params else []
+        # Try to use incremental average if available, fallback to old logic
+        subscriber = None
+        if hasattr(self, "globalFakeGatoTimer") and hasattr(self.globalFakeGatoTimer, "subscribedServices"):
+            subscriber = self.globalFakeGatoTimer.getSubscriber(self)
         previousAvrg = params['previousAvrg'] if 'previousAvrg' in params else {}
-        summarized = self.summarize_backLog(backLog)
-        avrg = {k:self.precisionRound(v/len(backLog),2) for k, v in summarized.items()} # divided values by counted list
-        if 'voc' in avrg: avrg['voc']=int(avrg['voc'])
-        avrg['time'] = int(round(time.time()))
-        listVal = [key for key in previousAvrg if key!='time']
-        for index in listVal:
-            if len(backLog) == 0 or (index not in avrg):
-                avrg[index] = previousAvrg[index]
-
+        avrg = {}
+        if ( subscriber is not None and 'running_sum' in subscriber and
+            'count' in subscriber and subscriber['count'] > 0):   
+            for k, v in subscriber['running_sum'].items():
+                avrg[k] = self.precisionRound(v / subscriber['count'], 2)
+            if 'voc' in avrg:
+                avrg['voc'] = int(avrg['voc'])
+            avrg['time'] = int(round(time.time()))
+            # Fill in missing keys from previousAvrg
+            listVal = [key for key in previousAvrg if key != 'time']
+            for index in listVal:
+                if index not in avrg:
+                    avrg[index] = previousAvrg[index]
+            # After using, clear running_sum and reset count
+            subscriber['running_sum'].clear()
+            subscriber['count'] = 0
+            subscriber['previousAvrg'] = avrg.copy()
+        else:
+            # Fallback to old logic
+            backLog = [{k: v for k, v in d.items() if k != 'time'} for d in params['backLog']] if 'backLog' in params else []
+            summarized = self.summarize_backLog(backLog)
+            if len(backLog) > 0:
+                avrg = {k:self.precisionRound(v/len(backLog),2) for k, v in summarized.items()}
+            if 'voc' in avrg:
+                avrg['voc'] = int(avrg['voc'])
+            avrg['time'] = int(round(time.time()))
+            listVal = [key for key in previousAvrg if key!='time']
+            for index in listVal:
+                if len(backLog) == 0 or (index not in avrg):
+                    avrg[index] = previousAvrg[index]
+            if subscriber is not None:
+                subscriber['previousAvrg'] = avrg.copy()
         if len(avrg) > 1:
             self._addEntry(avrg)
             self.globalFakeGatoTimer.emptyData(self)
@@ -145,7 +199,6 @@ class FakeGatoHistory():
                 actualEntry['time'] = backLog[0]['time']
                 actualEntry['status'] = backLog[0]['status']
             self._addEntry(actualEntry)
-
 
     def addEntry(self, entry):
         self.entry = entry
@@ -184,19 +237,9 @@ class FakeGatoHistory():
             self.usedMemory = 1
             self.lastEntry = self.firstEntry + self.usedMemory - 1
         # Now add the actual entry
-        if self.usedMemory < self.memorySize:
-            self.history.append(entry)
-            self.usedMemory += 1
-            self.lastEntry = self.firstEntry + self.usedMemory - 1
-        else:
-            # Overwrite oldest entry (circular buffer)
-            self.firstEntry += 1
-            overwrite_index = self.entry2address(self.lastEntry + 1)
-            if overwrite_index < len(self.history):
-                self.history[overwrite_index] = entry
-            else:
-                self.history.append(entry)
-            self.lastEntry = self.firstEntry + self.usedMemory - 1
+        self.history.append(entry)
+        self.usedMemory = len(self.history)
+        self.lastEntry = self.firstEntry + self.usedMemory - 1 
         entryTime = self.format32(entry['time'] - self.refTime - EPOCH_OFFSET)
         refTime = self.format32(self.refTime)
         memorySize = self.format16(self.memorySize)
@@ -209,9 +252,11 @@ class FakeGatoHistory():
         val = f'{entryTime}00000000{refTime}{self.accessoryType116}{usedMemory}{memorySize}{firstEntry}000000000101'
         self.HistoryStatus.set_value(self.hexToBase64(val))
         if self.storage is not None:
-            self.save()
+            self._dirty = True
         
+
     def save(self):
+            # Only write the current history to JSON; not called directly from _addEntry
         if self.loaded:
             data = {
                 'firstEntry': self.firstEntry,
@@ -219,9 +264,26 @@ class FakeGatoHistory():
                 'usedMemory': self.usedMemory,
                 'refTime': self.refTime,
                 'initialTime': self.initialTime,
-                'history': self.history
+                # Convert deque -> list before saving
+                'history': list(self.history)
             }
-            self.globalFakeGatoStorage.write({'service': self, 'data': data})
+            compact_json = json.dumps({'service': self.accessoryName, 'data': data}, separators=(',', ':'))
+            # Backward compatibility: check if write expects dict or string
+            try:
+                self.globalFakeGatoStorage.write(compact_json)
+            except Exception:
+                # Fallback to dict if string is not accepted
+                self.globalFakeGatoStorage.write({'service': self, 'data': data})
+
+    def _start_storage_worker(self):
+        def worker():
+            while True:
+                time.sleep(30)
+                if getattr(self, "_dirty", False):
+                    self.save()
+                    self._dirty = False
+        t = threading.Thread(target=worker, daemon=True)
+        t.start()
         
     def load(self):
         logging.info("Loading...")
@@ -249,7 +311,8 @@ class FakeGatoHistory():
                 self.usedMemory = data.get('usedMemory', 0)
                 self.refTime = data.get('refTime', 0)
                 self.initialTime = data.get('initialTime', 0)
-                self.history = data.get('history', [])
+                self.history = deque(data.get('history', []), maxlen=self.memorySize)
+
                 logging.info("** Loading Cache Data for '{0}', {1} entries **".format(self.accessoryName, max(0, self.lastEntry - self.firstEntry + 1)))
             else:
                 logging.info("** No valid persistent data found; starting fresh **")
@@ -274,11 +337,20 @@ class FakeGatoHistory():
 
     def getCurrentHistoryEntries(self):
         self.entry2address = lambda e: e % self.memorySize
+        # --- Self-healing pointer correction ---
+        if self.currentEntry < self.firstEntry:
+            logging.warning(f"[history] currentEntry ({self.currentEntry}) < firstEntry ({self.firstEntry}); resetting.")
+            self.currentEntry = self.firstEntry
+        if self.currentEntry > self.lastEntry:
+            logging.warning(f"[history] currentEntry ({self.currentEntry}) > lastEntry ({self.lastEntry}); resetting.")
+            self.currentEntry = self.firstEntry
         # Build dataStream efficiently using a list of strings
         dataStream_parts = []
         sent_from = self.currentEntry
         sent_to = self.lastEntry
         sent_any = False
+        atype117 = self.accessoryType117
+        atype117bis = getattr(self, "accessoryType117bis", None)
         # Safely access self.history (list of dicts), and robustly handle missing keys
         num_entries_to_send = max(0, self.lastEntry - self.currentEntry + 1) if self.transfer else 0
         if (self.currentEntry <= self.lastEntry) and (self.transfer is True):
@@ -306,48 +378,18 @@ class FakeGatoHistory():
                         time_hex = self.format32(time_val - self.refTime - EPOCH_OFFSET)
                     except Exception:
                         time_hex = self.format32(0)
-                    match self.accessoryType:
-                        case 'weather':
-                            temp = self.format16(entry.get('temp', 0) * 100)
-                            humidity = self.format16(entry.get('humidity', 0) * 100)
-                            pressure = self.format16(entry.get('pressure', 0) * 10)
-                            dataStream_parts.append(f",10 {currEntry}{time_hex}-{self.accessoryType117}:{temp} {humidity} {pressure}")
-                        case 'energy':
-                            power = self.format16(entry.get('power', 0) * 10)
-                            dataStream_parts.append(f",14 {currEntry}{time_hex}-{self.accessoryType117}:0000 0000 {power} 0000 0000")
-                        case 'room':
-                            temp = self.format16(entry.get('temp', 0) * 100)
-                            humidity = self.format16(entry.get('humidity', 0) * 100)
-                            ppm = self.format16(entry.get('ppm', 0))
-                            dataStream_parts.append(f",13 {currEntry}{time_hex}{self.accessoryType117}{temp}{humidity}{ppm}0000 00")
-                        case 'room2':
-                            temp = self.format16(entry.get('temp', 0) * 100)
-                            humidity = self.format16(entry.get('humidity', 0) * 100)
-                            voc = self.format16(entry.get('voc', 0))
-                            dataStream_parts.append(f",15 {currEntry}{time_hex}{self.accessoryType117}{temp}{humidity}{voc}0054 a80f01")
-                        case 'door' | 'motion' | 'switch':
-                            status = format(entry.get('status', 0), '02X')
-                            dataStream_parts.append(f",0b {currEntry}{time_hex}{self.accessoryType117}{status}")
-                        case 'aqua':
-                            status_val = entry.get('status', 0)
-                            status = format(int(bool(status_val)), '02X')
-                            if status_val is True:
-                                dataStream_parts.append(f"+,0d {currEntry}{time_hex}{self.accessoryType117}{status} 300c")
-                            else:
-                                waterAmount = self.format32(entry.get('waterAmount', 0))
-                                dataStream_parts.append(f",15 {currEntry}{time_hex}{self.accessoryType117bis}{status}{waterAmount} 00000000 300c")
-                        case 'thermo':
-                            currtemp = self.format16(entry.get('currentTemp', 0) * 100)
-                            settemp = self.format16(entry.get('setTemp', 0) * 100)
-                            valvePos = format(entry.get('valvePosition', 0), '02X')
-                            dataStream_parts.append(f",11 {currEntry}{time_hex}{self.accessoryType117}{currtemp}{settemp}{valvePos} 0000")
+                    formatter = self.entry_formatters.get(self.accessoryType)
+                    if not formatter:
+                        logging.warning(f"No formatter found for accessory type: {self.accessoryType}")
+                        continue
+                    formatted_entry = formatter(self.format16, self.format32, entry, currEntry, time_hex, atype117, atype117bis)
+                    dataStream_parts.append(formatted_entry)
+
                 self.currentEntry += 1
                 sent_any = True
-                # Defensive: re-calculate memoryAddress for next loop
                 self.memoryAddress = self.entry2address(self.currentEntry)
                 if self.currentEntry > self.lastEntry:
                     break
-            # After processing, reset transfer flag
             self.transfer = False
             sendStream = ''.join(dataStream_parts)
             # --- Prune sent entries from history ---
@@ -374,14 +416,14 @@ class FakeGatoHistory():
             max_pruneable = max(0, total_entries - RETENTION)
             num_to_prune = min(prune_to - self.firstEntry + 1, max_pruneable)
             if num_to_prune > 0 and self.usedMemory > 0:
-                self.history = self.history[num_to_prune:]
+                self.history = deque(itertools.islice(self.history, num_to_prune, None), maxlen=self.memorySize)
                 self.firstEntry += num_to_prune
                 self.usedMemory -= num_to_prune
                 if self.usedMemory < 0:
                     self.usedMemory = 0
                 if self.firstEntry > self.lastEntry:
                     self.lastEntry = self.firstEntry
-                logging.info(f"Pruned {num_to_prune} entries from history. Used memory: {self.usedMemory}.")
+                #logging.info(f"Pruned {num_to_prune} entries from history. Used memory: {self.usedMemory}.")
                 pruned = True
             else:
                 logging.info(f"No entries pruned from history; RETENTION of {RETENTION} entries maintained.")
@@ -396,12 +438,11 @@ class FakeGatoHistory():
         valHex = self.base64ToHex(val)
         valInt = int(valHex[4:12], base=16)
         address = self.swap32(valInt)
-        self.currentEntry = address if address != 0 else  1
+        self.currentEntry = max(self.firstEntry, min(address if address != 0 else self.firstEntry, self.lastEntry))
         self.transfer = True
 
     def setCurrentSetTime(self, val):
         x = bytearray(base64.b64decode(val))
         x.reverse()
         date_time = datetime.fromtimestamp(EPOCH_OFFSET + int(x.hex(),16))
-        d = date_time.strftime("%d.%m.%Y, %H:%M:%S")
-        
+        d = date_time.strftime("%d.%m.%Y, %H:%M:%S")   
