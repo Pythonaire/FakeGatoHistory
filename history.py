@@ -75,44 +75,7 @@ class FakeGatoHistory():
                 time.sleep(0.05)
             else:
                 logging.warning("Timeout waiting for storage to load.")
-        '''
-        match self.accessoryType:
-            case 'weather':
-                self.accessoryType116 = "03 0102 0202 0302"
-                self.accessoryType117 = "07"
-                self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
-            case 'energy':
-                self.accessoryType116 = "04 0102 0202 0702 0f03"
-                self.accessoryType117 = "1f"
-                self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
-            case 'room':
-                self.accessoryType116 = "04 0102 0202 0402 0f03"
-                self.accessoryType117 = "0f"
-                self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
-            case 'room2':
-                self.accessoryType116 = "07 0102 0202 2202 2901 2501 2302 2801"
-                self.accessoryType117 = "7f"
-                self.globalFakeGatoTimer.subscribe(self, self.calculateAverage)
-            case 'door':
-                self.accessoryType116 = "01 0601"
-                self.accessoryType117 = "01"
-                self.globalFakeGatoTimer.subscribe(self, self.select_types)
-            case 'motion':
-                self.accessoryType116 = "02 1301 1c01"
-                self.accessoryType117 = "02"
-                self.globalFakeGatoTimer.subscribe(self, self.select_types)
-            case 'switch':
-                self.accessoryType116 = "01 0e01"
-                self.accessoryType117 = "01"
-                self.globalFakeGatoTimer.subscribe(self, self.select_types)
-            case 'aqua':
-                self.accessoryType116 = "03 1f01 2a08 2302"
-                self.accessoryType117 = "05"
-                self.accessoryType117bis = "07"
-            case 'thermo':
-                self.accessoryType116 = "05 0102 1102 1001 1201 1d01"
-                self.accessoryType117 = "1f"
-        '''
+        
         config = self.ACCESSORY_CONFIG.get(self.accessoryType)
         if config:
             self.accessoryType116 = config['type116']
