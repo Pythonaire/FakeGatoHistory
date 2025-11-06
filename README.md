@@ -4,8 +4,8 @@ Based on the fabulous work of <https://github.com/simont77/fakegato-history> to 
 
 ## some modifications ...
 
-The original fakegato-history have a variable mem cache for data records. I set the mem cache fixed to 4032 and the interval of 10 minutes (to prevent memory holes). That gives 4032/6 = 672 hours of values in the memory. 
-Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented too, but only on local space. This file can be removed after uploading data to the client anytime.
+The original fakegato-history have a variable mem cache for data records. I set the mem cache fixed to 2048 and the interval of 10 minutes (to prevent memory holes). The Eve app, cut data older then 14 days. 14 days and 10 minutes interval needs around 2016 entries.
+Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented too, but only on local space. If the rentention limit of 2016 entries is reached, them memory and files are made up.
 
 ## How To to use (example Weather data)
 
