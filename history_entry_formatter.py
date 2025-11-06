@@ -40,13 +40,3 @@ def format_thermo_entry(format16, format32, entry, currEntry, time_hex, atype117
     settemp = format16(entry.get('setTemp', 0) * 100)
     valvePos = format(entry.get('valvePosition', 0), '02X')
     return f",11 {currEntry}{time_hex}{atype117}{currtemp}{settemp}{valvePos} 0000"
-
-
-
-
-
-
-
-
-
-

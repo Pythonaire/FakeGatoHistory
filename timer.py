@@ -1,5 +1,5 @@
 import logging
-import threading, time
+import threading
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
 
@@ -13,78 +13,22 @@ def call_repeatedly(interval, func, *args, **kwargs):
     threading.Thread(target=loop, daemon=True).start()
     return stopped
 
-
-class FakeGatoScheduler:
-    _instance = None
-    _lock = threading.Lock()
-
-    def __init__(self):
-        self.timers = []
-        self.running = False
-        self.thread = None
-
-    @classmethod
-    def get_instance(cls):
-        with cls._lock:
-            if cls._instance is None:
-                cls._instance = cls()
-            return cls._instance
-
-    def register(self, timer, interval, callback):
-        with self._lock:
-            self.timers.append({
-                'timer': timer,
-                'interval': interval,
-                'callback': callback,
-                'last_run': 0
-            })
-        if not self.running:
-            self._start()
-
-    def _start(self):
-        if self.running:
-            return
-        self.running = True
-        self.thread = threading.Thread(target=self._run, daemon=True)
-        self.thread.start()
-
-    def _run(self):
-        while self.running:
-            now = time.time()
-            with self._lock:
-                for t in self.timers:
-                    if now - t['last_run'] >= t['interval']:
-                        try:
-                            t['callback']()
-                        except Exception as e:
-                            print(f"[FakeGatoScheduler] Error: {e}")
-                        t['last_run'] = now
-            time.sleep(1)
-
 class FakeGatoTimer():
     def __init__(self, minutes, accessoryName, *args, **kwargs):
         self.minutes = minutes
         self.subscribedServices = []
-        self.interval = minutes * 60
-        self.subscribers = []
-        #self.running = False
-        self.running = True
-        self._scheduler = FakeGatoScheduler.get_instance()
-        self._scheduler.register(self, self.interval, self.executeCallbacks)
+        self.running = False
         self.accessoryName = accessoryName
         self._backlog_lock = threading.Lock()
     
     def subscribe(self, service, callback):
-        from collections import defaultdict
         newService = {
-            'service': service,
-            'callback': callback, # -> calculateAverage/select_types
-            'backLog': [],
-            'previousBackLog': [],
-            'previousAvrg': {},
-            'running_sum': defaultdict(float),
-            'count': 0
-        }
+			'service': service,
+			'callback': callback, # -> calculateAverage/select_types
+			'backLog': [],
+			'previousBackLog': [],
+			'previousAvrg': {}
+		}
         self.subscribedServices.append(newService)
 
     def getSubscriber(self, service):
@@ -108,9 +52,10 @@ class FakeGatoTimer():
         self.running = False
         
     def executeCallbacks(self):
-        #logging.info("**Fakegato-timer: executeCallbacks** {0} ** interval {1} minutes**".format(self.accessoryName, self.minutes))
         if len(self.subscribedServices) != 0:
-            for service in self.subscribedServices:
+            with self._backlog_lock:
+                services_copy = list(self.subscribedServices)
+            for service in services_copy:
                 try:
                     if callable(service.get("callback")):
                         service["previousAvrg"] = service["callback"](
@@ -163,18 +108,12 @@ class FakeGatoTimer():
                 self.executeImmediateCallback(subscriber)
             else:
                 subscriber['backLog'].append(data)
-                # Incrementally update running_sum and count
-                for k, v in data.items():
-                    if k != 'time' and isinstance(v, (int, float)):
-                        subscriber['running_sum'][k] += v
-                subscriber['count'] += 1
                 if self.running == False:
                     logging.info("**Start Fakegato-Timer {0} with {1} minutes inverval**".format(self.accessoryName, self.minutes))
                     self.running = True
-                    #self.cancel_future_calls = call_repeatedly(self.minutes*60, self.executeCallbacks)
+                    self.cancel_future_calls = call_repeatedly(self.minutes*60, self.executeCallbacks)
 
     def emptyData(self, service):
-        #logging.info("**Fakegato-timer: emptyData ** {0} ".format(service.accessoryName))
         source = self.getSubscriber(service)
         if source is None:
             try:
