@@ -7,6 +7,8 @@ Based on the fabulous work of <https://github.com/simont77/fakegato-history> to 
 The original fakegato-history have a variable mem cache for data records. I set the mem cache fixed to 2048 and the interval of 10 minutes (to prevent memory holes). The Eve app, cut data older then 14 days. 14 days and 10 minutes interval needs around 2016 entries.
 Additional, the original javascript implementation has the ability to cache data on harddisk to prevent data lost in case of system crash. These function is implemented too, but only on local space. If the rentention limit of 2016 entries is reached, them memory and files are made up.
 
+Using public ip addresses (for example bridging IPv6) and the ISP change the network, the connection is lost, the service needs to be restarted. The "unvisible service" mDSNAdvizer update automatically the connection to the homekit gateway (here refresh/update the connection each hour continously).
+
 ## How To to use (example Weather data)
 
 HAP-Python <https://github.com/ikalchev/HAP-python> holds the default Apple Homekit services and characteristics in two files 'services.json' and 'characteristics.json' under "/usr/local/lib/python3.x/dist-packages/pyhap/ressources". Apple change these definition in newer IOS versions. Additionally, maybe you like to define your own services. Because of that, i use my own service and characteristic definitions.

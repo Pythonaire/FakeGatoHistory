@@ -1,10 +1,34 @@
 #!/usr/bin/env python3
 from pyhap.accessory import Accessory
-from pyhap.const import CATEGORY_SENSOR
+from pyhap.const import CATEGORY_SENSOR, CATEGORY_OTHER
 import logging, time
+import asyncio
 from history import FakeGatoHistory
 
 logging.basicConfig(level=logging.INFO, format="[%(module)s] %(message)s")
+
+
+class mDNSAdvertizer(Accessory):
+    '''
+    Use that to advertize continously the mDNS record. to prevent disconnects after network changes
+    '''
+    category = CATEGORY_OTHER  # Neutral, won’t appear with icons
+    def __init__(self, driver,  *args, **kwargs):
+        super().__init__(driver,  *args, **kwargs)
+        self.driver = driver
+        self.set_info_service(firmware_revision="0.0.1", manufacturer="Pythonaire", model="HiddenAdv")
+
+    @Accessory.run_at_interval(3600)
+    async def run(self):
+        try:
+            await asyncio.sleep(5)  # delay first run slightly
+            if not self.driver or self.driver.advertiser is None:
+                logging.warning("[INFO] Advertiser not ready, skipping re-announce.")
+                return
+            logging.info("[INFO] Refreshing HomeKit advertisement...")
+            self.driver.update_advertisement()
+        except Exception as e:
+            logging.warning(f"[INFO] Failed to update advertisement: {e}")
 
 class Weather(Accessory):
     category = CATEGORY_SENSOR

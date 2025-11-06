@@ -19,6 +19,7 @@ def get_bridge(driver):
 
 try:
     driver = AccessoryDriver(port=51826, persist_file= persist_file, loader=loader)
+    driver.add_accessory(ClassExample.mDNSAdvertizer(driver, display_name="mDNSAdvizer"))
     driver.add_accessory(accessory=get_bridge(driver))
     signal.signal(signal.SIGTERM, driver.signal_handler)
     driver.start()
